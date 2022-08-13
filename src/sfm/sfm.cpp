@@ -8,6 +8,7 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &folder_){
 
     //TODO: Set folder_name
 
-   // vo_ = std::make_shared<VisualOdom>(folder_name_);
+    vo_ = std::make_shared<VisualOdom>(folder_);
+    vo_->run_vo_pipeline();
 
 }

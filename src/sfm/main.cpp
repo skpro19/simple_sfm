@@ -2,13 +2,11 @@
 
 int main(){
 
-    std::string base_folder_ = "/home/skpro19/sfm/";
+    std::string base_folder_ = "/home/skpro19/simple_sfm/";
     //simple_sfm::SimpleSFM* sfm_ = new simple_sfm::SimpleSFM(base_folder_);
 
 
     simple_sfm::SimpleSFM sfm_(base_folder_);
-
-    
 
 
 }

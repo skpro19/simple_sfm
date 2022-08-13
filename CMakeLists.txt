@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(simple_visual_odom)
+project(simple_sfm)
 
 add_compile_options(-std=c++11)
 
@@ -18,7 +18,7 @@ add_definitions(
 )
 
 # set(-D_GLIBCXX_USE_CXX11_ABI=0)
-add_executable(simple_visual_odom
+add_executable(simple_sfm
     src/vo/visual_odom.cpp
     src/vo/io.cpp
     src/sfm/main.cpp
@@ -26,7 +26,7 @@ add_executable(simple_visual_odom
     src/vo/vo_pipeline.cpp
     src/vo/visualization_helpers.cpp)
 
-target_link_libraries(simple_visual_odom
+target_link_libraries(simple_sfm
     ${OpenCV_LIBS}
     boost_system
     boost_filesystem

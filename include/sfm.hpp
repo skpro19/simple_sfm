@@ -48,7 +48,7 @@ namespace simple_sfm
 
             //void  run_sfm_pipeline();
 
-           // std::shared_ptr<VisualOdom> vo_;           
+           std::shared_ptr<VisualOdom> vo_;           
 
 
     };
