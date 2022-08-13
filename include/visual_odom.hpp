@@ -83,7 +83,6 @@ class VisualOdom{
 
 
         //** to be refactored
-        void run_vo_pipeline();
         void run_pipeline();
         //void play_video();
         
@@ -92,6 +91,7 @@ class VisualOdom{
 
         VisualOdom(const std::string &folder_);
 
+        void run_vo_pipeline();
         
         void read_image_files(const std::string &folder_);
         void extract_features(const cv::Mat &img_1, const cv::Mat &img_2);

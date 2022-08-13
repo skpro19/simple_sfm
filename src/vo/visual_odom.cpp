@@ -1,23 +1,25 @@
-#include "../include/visual_odom.hpp"
-#include <boost/foreach.hpp> 
+#include "../../include/visual_odom.hpp"
 
 #include <fstream>
 #include <iostream>
 
 
-//VisualOdom::VisualOdom(const std::string &folder_):image_folder_{folder_}{
 VisualOdom::VisualOdom(const std::string &folder_){
 
 
     std::cout << "version: " << CV_VERSION << std::endl;
+    std::cout << "base_folder: " << folder_ << std::endl;
 
-    base_dir_ = "/home/skpro19/simple_visual_odom/";
+    //base_dir_ = "/home/skpro19/simple_sfm/";
+    
+    base_dir_ = folder_;
+    
     //data_dir_ = base_dir_ + "data/00/";
     
     
     process_data_files();
 
-    run_vo_pipeline();
+    //run_vo_pipeline();
 
     //read_projection_matrix();
     //read_ground_truth_poses();
