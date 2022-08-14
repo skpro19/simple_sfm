@@ -34,7 +34,12 @@
 #include "vis.hpp"
 
 namespace simple_sfm
-{
+{   
+
+
+   
+
+    
 
     class SimpleSFM{
 
@@ -51,13 +56,20 @@ namespace simple_sfm
 
             void updateCameraPose(cv::Matx44d &pose_);
 
+            void displayCameraPose(const cv::Matx44d &pose_);
+
+            void triangulate3DPoints(std::vector<cv::Matx41d> &points3d_);
+
+            
         private:
 
               
-            
-            //*** camera poses in curr frame and prev frame (origin is C_0) 
-            cv::Matx44d C_k_, C_k_minus_1; 
 
+            cv::Matx44d C_0, C_1;   //camera poses in curr frame and prev frame --> origin is C_1 (at i==0) 
+            //cv::Matx34d P_0, P_1;   //camera projection matrices
+            cv::Matx33d K_;         //camera intrinsics
+
+            
 
             //** shared ptrs to other classes
             std::shared_ptr<VisualOdom> vo_; 

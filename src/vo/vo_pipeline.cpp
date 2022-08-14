@@ -61,6 +61,7 @@ cv::Mat VisualOdom::getCameraPose(){
 
 bool VisualOdom::process_next_frame(const int &i){
     
+    std::cout << "[vo] --- processing frame " << i << std::endl;
 
     kp_1.resize(0); 
     kp_2.resize(0); 
@@ -68,17 +69,22 @@ bool VisualOdom::process_next_frame(const int &i){
     kp_1_matched.resize(0); 
     kp_2_matched.resize(0);
 
+    kp_1f.resize(0);
+    kp_2f.resize(0);
+
     cv::Mat img_1 = cv::imread(image_file_names_[last_idx_].c_str());
     cv::Mat img_2 = cv::imread(image_file_names_[i].c_str());
 
-    std::cout << "img_1.size(): " << img_1.size() << std::endl;
+    //std::cout << "img_1.size(): " << img_1.size() << std::endl;
 
     extract_features(img_1, img_2);
     match_features(img_1, img_2);
 
     assert((int)kp_1_matched.size() == (int)kp_2_matched.size());
 
-    std::vector<cv::Point2f> kp_1f, kp_2f; //array of keypoint co-ordinates
+    std::cout << "[vo] -- flag 1" << std::endl;
+
+    //std::vector<cv::Point2f> kp_1f, kp_2f; //array of keypoint co-ordinates
 
 
     //converting vector<Keypoints> to vector<Point2f>
@@ -127,6 +133,9 @@ bool VisualOdom::process_next_frame(const int &i){
     //if(inlier_cnt_ < 25) {continue;}
     if(inlier_cnt_ < 25) {return false;}
 
+    std::cout << "[vo] --- flag 2!" << std::endl;
+
+
     scale_ = getScale(i, last_idx_); 
 
     bool flag_ = ((scale_ > 0.1) &&  (del_z_ > del_x_) && (del_z_ > del_y_))  ; 
@@ -136,6 +145,9 @@ bool VisualOdom::process_next_frame(const int &i){
     //if(!flag_) {continue; ;}
 
     if(!flag_) {return false; ;}
+
+    std::cout << "[vo] --- flag 3!" << std::endl;
+
 
     last_idx_ = i;
 
@@ -153,7 +165,7 @@ bool VisualOdom::process_next_frame(const int &i){
     //C_k_minus_1_ = C_k_;
 
     //std::cout <<  i << "--->[x y z]: " << "(" <<C_k_.at<double>(0, 3) << "," << C_k_.at<double>(1, 3) << "," << C_k_.at<double>(2,3) << ")" << std::endl; 
-    draw_trajectory_windows(C_k_, i);
+    //draw_trajectory_windows(C_k_, i);
 
     return true;
 }

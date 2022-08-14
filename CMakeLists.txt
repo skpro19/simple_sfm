@@ -23,6 +23,7 @@ add_executable(simple_sfm
     src/vo/io.cpp
     src/vo/vo_pipeline.cpp
     src/vo/visualization_helpers.cpp
+    src/vo/sfm_helpers.cpp
 
     src/sfm/main.cpp
     src/sfm/sfm.cpp

@@ -55,7 +55,10 @@ class VisualOdom{
         VisualOdom(const std::string &folder_);
         
 
-
+        //*** sfm helpers
+        void update2DMatches(std::vector<cv::Point2f> &v1, std::vector<cv::Point2f> &v2);
+        
+        
         cv::Mat getCameraPose();
         bool initialize(); 
         bool process_next_frame(const int &i);
@@ -136,6 +139,9 @@ class VisualOdom{
 
         double getScale(int curr_idx_, int prev_idx_);
         double get_z_scale(int curr_idx_, int prev_idx_);
+
+
+        std::vector<cv::Point2f> kp_1f, kp_2f; //array of keypoint co-ordinates
 
         char text[100];
 
