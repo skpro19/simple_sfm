@@ -21,45 +21,6 @@
 #include <opencv2/viz/types.hpp>
 
 
-
-
-//TODO:
-/*
-
-- Rename visual_odom.cpp to feature_processing
-- Create proejction matrix 
-- cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
-- Reduce the number of global variables in VisualOdom class
-- Write static class for each of the source files
-
-    
-
-    
-    //use glob
-    //use cv::decomposeProjectionMatrix to decompose P =  [K R t]
-    //import gt in  a gt_matrix
-
-     Mat H = convertToHomogeneousMat(R_trans, T_trans);
-
-    Transformation Matrix is actually called Homogenous Transformation Matrix
-
-    Plot the predicted point and the acutal ground truth and the error in realtime
-
-    GNUPlot
-
-    remove kp_1, kp_1_matched from global variables --- potential source of error
-
-    //add ransac visualization
-
-*/
-
-/*
-
-Implementation Pipeline - 
-
-
-*/
-
 class VisualOdom{
 
 
@@ -85,11 +46,19 @@ class VisualOdom{
         //** to be refactored
         void run_pipeline();
         //void play_video();
+
+       
         
 
     public:     
 
         VisualOdom(const std::string &folder_);
+        
+
+
+        cv::Mat getCameraPose();
+        bool initialize(); 
+        bool process_next_frame(const int &i);
 
         void run_vo_pipeline();
         
@@ -99,7 +68,12 @@ class VisualOdom{
         cv::Mat get_essential_matrix(const cv::Mat &img_1, const cv::Mat &img_2);        
         
         double getAbsoluteScale(int frame_id);
-    
+
+
+        ///*** getters and setters
+        void update_pose(cv::Matx44d &pose_);
+
+        
         std::string image_folder_;  
         
         std::vector<boost::filesystem::path> image_path_list_; 
@@ -135,6 +109,11 @@ class VisualOdom{
          //C_k = C_k_minus_1_ * T_k_
         cv::Mat C_k_, C_k_minus_1_; //C_k -> camera pose in the kth frame w.r.t. intial frame
         cv::Mat T_k_; //relates the transform between the camera poses C_k_minus_1_ and C_k_
+
+        cv::Mat E_, R, t;
+        cv::Mat R_f, t_f;
+        int last_idx_;
+
 
 
         //*** tuning params

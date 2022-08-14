@@ -21,10 +21,14 @@ add_definitions(
 add_executable(simple_sfm
     src/vo/visual_odom.cpp
     src/vo/io.cpp
+    src/vo/vo_pipeline.cpp
+    src/vo/visualization_helpers.cpp
+
     src/sfm/main.cpp
     src/sfm/sfm.cpp
-    src/vo/vo_pipeline.cpp
-    src/vo/visualization_helpers.cpp)
+
+    src/vis/vis.cpp
+)
 
 target_link_libraries(simple_sfm
     ${OpenCV_LIBS}

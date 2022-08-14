@@ -8,5 +8,8 @@ int main(){
 
     simple_sfm::SimpleSFM sfm_(base_folder_);
 
+    //sfm_.initalizePipeline();
+
+    sfm_.runSFMPipeline();
 
 }
