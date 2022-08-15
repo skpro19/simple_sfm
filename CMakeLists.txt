@@ -19,22 +19,11 @@ add_definitions(
 
 # set(-D_GLIBCXX_USE_CXX11_ABI=0)
 add_executable(simple_sfm
-    src/vo/visual_odom.cpp
-    src/vo/io.cpp
-    src/vo/vo_pipeline.cpp
-    src/vo/visualization_helpers.cpp
-    src/vo/sfm_helpers.cpp
-
     src/sfm/main.cpp
     src/sfm/sfm.cpp
-
-    src/vis/vis.cpp
+    src/sfm/io.cpp
 )
 
 target_link_libraries(simple_sfm
     ${OpenCV_LIBS}
-    boost_system
-    boost_filesystem
-
-    # lstdc++
 )
