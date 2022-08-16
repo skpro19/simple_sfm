@@ -14,11 +14,19 @@ namespace simple_sfm{
 
             SimpleSFM(const std::string &base_folder_);
 
+            void InitializeSFMPipeline();
+
+            void updateIOParams();
 
         private:
 
-            std::shared_ptr<SFM_IO> io_;
-
+            std::shared_ptr<SFM_IO>                     io_;
+            std::vector<cv::String>                     image_file_list_;
+            
+            cv::Matx34f                                 P0_, P1_;
+            cv::Matx33f                                 K_;
+            cv::Matx33f                                 R0_, R1_;
+            cv::Matx41f                                 t0_, t1_;
 
 
     };

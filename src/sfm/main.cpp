@@ -8,7 +8,9 @@ int main(){
 
     //simple_sfm::IO io_(base_folder_);
 
-    simple_sfm::SimpleSFM sfm_(base_folder_);
+    simple_sfm::SimpleSFM sfm_(base_folder_);   
+
+    
 
 
   

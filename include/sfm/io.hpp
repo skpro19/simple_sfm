@@ -35,8 +35,11 @@ namespace simple_sfm{
             SFM_IO(const std::string &base_folder_);
 
             //getters
-            cv::Matx33f getK() const;
-            cv::Matx34f getP() const;
+            cv::Matx33f getK()                                          const   {   return K_;  }
+            cv::Matx34f getP0()                                         const   {   return P0_; }
+            cv::Matx33f getR0()                                         const   {   return R0_; }
+            cv::Matx41f gett0()                                         const   {   return t0_; }
+            void getImageFileNames(std::vector<cv::String> &list_)      const   {   list_ = image_file_names_; }
 
 
         private:
@@ -59,7 +62,7 @@ namespace simple_sfm{
             const std::string               image_dir_;
 
             cv::Matx34f                     P0_;                            //initial projection matrix
-            cv::Matx33f                     K0_;
+            cv::Matx33f                     K_;
             cv::Matx33f                     R0_;
             cv::Matx41f                     t0_;
 

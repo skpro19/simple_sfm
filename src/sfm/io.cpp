@@ -90,9 +90,9 @@ void simple_sfm::SFM_IO::LoadCameraParamsMatrix()
 {
 
     std::cout << "[io] Inside the LoadCameraParamsMatrix function!" << std::endl;
-    cv::decomposeProjectionMatrix(P0_, K0_, R0_, t0_);
+    cv::decomposeProjectionMatrix(P0_, K_, R0_, t0_);
 
-    std::cout << "[io]  K0_: " << K0_ << std::endl;
+    std::cout << "[io]  K_: " << K_ << std::endl;
     std::cout << "[io]  R0_: " << R0_ << std::endl;
     std::cout << "[io]  t0_: " << t0_ << std::endl;
 
