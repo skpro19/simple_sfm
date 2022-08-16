@@ -15,18 +15,23 @@ namespace simple_sfm{
 
             IO(const std::string &base_folder_);
 
+            //getters
+            cv::Matx33f getK() const;
+            cv::Matx34f getP() const;
+
+
+        private:
+
+            //functions
+            
             void LoadDataFiles();
-
             void LoadProjectionMatrix(const std::string &calib_file_name_);
-
             void LoadCameraParamsMatrix();
-
             void LoadGTPoses(const std::string &gt_file_name_);
-
             void LoadImageFiles(const std::string &img_folder_name_);
 
-        
-        private:
+            
+            //variables
 
             const std::string               calib_file_name_;
             const std::string               data_dir_;

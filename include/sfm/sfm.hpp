@@ -5,6 +5,9 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <iostream>
+#include <memory>
+
 
 
 #include <opencv2/opencv.hpp>
@@ -14,7 +17,7 @@
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core/persistence.hpp>
 
-
+#include "io.hpp"
 
 
 namespace simple_sfm
@@ -25,15 +28,15 @@ namespace simple_sfm
 
         public:
 
-            //SimpleSFM(std::string &base_folder_);
-            SimpleSFM(const std::string &folder_);
+            SimpleSFM(const std::string &base_folder_);
 
-            void InitializeSFMPipeline();
 
-            
 
 
         private:
+
+            std::shared_ptr<IO> io_;
+            
 
               
 

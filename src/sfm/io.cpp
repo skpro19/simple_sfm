@@ -139,8 +139,6 @@ void simple_sfm::IO::LoadGTPoses(const std::string &gt_file_name_)
 
             std::cout << "[io]  gt_: " << gt_ << std::endl;
 
-            if(cnt) break;
-
         }
 
 
