@@ -1,7 +1,8 @@
 #include "../../include/sfm/io.hpp"
 
 
-simple_sfm::IO::IO(const std::string &base_folder_)
+
+simple_sfm::SFM_IO::SFM_IO(const std::string &base_folder_)
                                                     :calib_file_name_("calib.txt")
                                                     ,base_dir_(base_folder_)
                                                     ,data_dir_(base_folder_ + "data/00/")
@@ -14,7 +15,7 @@ simple_sfm::IO::IO(const std::string &base_folder_)
 
 }
 
-void simple_sfm::IO::LoadDataFiles()
+void simple_sfm::SFM_IO::LoadDataFiles()
 {
 
     std::cout << "[io] Inside LoadDataFiles function!"  << std::endl;
@@ -26,7 +27,7 @@ void simple_sfm::IO::LoadDataFiles()
 
 }
 
-void simple_sfm::IO::LoadProjectionMatrix(const std::string &calib_file_name_)
+void simple_sfm::SFM_IO::LoadProjectionMatrix(const std::string &calib_file_name_)
 {
 
     std::cout << "[io]: Inside the LoadProjectionMatrix function!" << std::endl;
@@ -85,7 +86,7 @@ void simple_sfm::IO::LoadProjectionMatrix(const std::string &calib_file_name_)
 }
 
 
-void simple_sfm::IO::LoadCameraParamsMatrix()
+void simple_sfm::SFM_IO::LoadCameraParamsMatrix()
 {
 
     std::cout << "[io] Inside the LoadCameraParamsMatrix function!" << std::endl;
@@ -100,7 +101,7 @@ void simple_sfm::IO::LoadCameraParamsMatrix()
 
 
 
-void simple_sfm::IO::LoadGTPoses(const std::string &gt_file_name_)
+void simple_sfm::SFM_IO::LoadGTPoses(const std::string &gt_file_name_)
 {
 
     std::cout << "[io] Inside the LoadGTPoses function!" << std::endl;
@@ -156,7 +157,7 @@ void simple_sfm::IO::LoadGTPoses(const std::string &gt_file_name_)
 
 
 
-void simple_sfm::IO::LoadImageFiles(const std::string &img_folder_name_)
+void simple_sfm::SFM_IO::LoadImageFiles(const std::string &img_folder_name_)
 {
 
     std::string image_folder_ = data_dir_ + img_folder_name_;

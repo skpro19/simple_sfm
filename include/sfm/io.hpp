@@ -2,18 +2,37 @@
 #define IO_H
 
 
-#include "sfm.hpp"
+// ========================================================
+// ============= All IO related functions =================
+// ========================================================
 
+#include <string>
+#include <iostream>
+#include <vector>
+#include <iostream>
+#include <memory>
 #include <sstream>
 #include <fstream>
 
+
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/calib3d.hpp>
+#include <opencv2/core/persistence.hpp>
+
+
+//#include "sfm.hpp"
+
 namespace simple_sfm{
 
-    class IO {
+    class SFM_IO {
 
         public: 
 
-            IO(const std::string &base_folder_);
+            SFM_IO(const std::string &base_folder_);
 
             //getters
             cv::Matx33f getK() const;

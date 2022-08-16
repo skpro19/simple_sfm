@@ -20,6 +20,7 @@ add_definitions(
 # set(-D_GLIBCXX_USE_CXX11_ABI=0)
 add_executable(simple_sfm
     src/sfm/main.cpp
+
     src/sfm/sfm.cpp
     src/sfm/io.cpp
 )
