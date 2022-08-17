@@ -7,8 +7,51 @@ simple_sfm::Frame::Frame() {
 
 }
 
+void simple_sfm::Frame::Points2DFromKeyPoints(const KP &kp_ , Points2D &points_) 
+{
+    assert(("[frames.cpp]" , points_.size() == 0));
 
-void simple_sfm::Frame::GetGoodMatches(const cv::String &img_a_, const cv::String &img_b_, KeyPoints &kp_a_, KeyPoints &kp_b_, Matches &good_matches_)
+    for (const auto &t : kp_) {
+        
+        points_.push_back(t.pt);
+
+    }
+
+}
+
+double simple_sfm::Frame::GetAbsoluteScale(const cv::Mat &curr_pose_ , const cv::Mat &prev_pose_)
+{
+
+    cv::Point3d prev_point_ = {prev_pose_.at<double>(0,3), prev_pose_.at<double>(1,3), prev_pose_.at<double>(2,3)};
+    cv::Point3d curr_point_ = {curr_pose_.at<double>(0,3), curr_pose_.at<double>(1,3), curr_pose_.at<double>(2,3)};
+    cv::Point3d diff_ = (curr_point_ - prev_point_);
+
+    double scale_ = cv::norm(diff_);
+    
+    return scale_;
+
+}
+
+
+void simple_sfm::Frame::Points2DFromFrames(const cv::String &img_a_, const cv::String &img_b_, Points2D &pts_a_, Points2D &pts_b_) 
+{
+
+    KeyPoints kp_a_ , kp_b_; 
+    ExtractKeyPoints(img_a_, img_b_, kp_a_, kp_b_);
+
+    Matches good_matches_ ; 
+    GetGoodMatches(img_a_, img_b_, kp_a_, kp_b_, good_matches_);
+
+    KeyPoints kp_a_mat_, kp_b_mat_;
+    ExtractMatchingKeyPoints(kp_a_, kp_b_, good_matches_, kp_a_mat_, kp_b_mat_);
+
+    Points2DFromKeyPoints(kp_a_mat_, pts_a_);
+    Points2DFromKeyPoints(kp_b_mat_, pts_b_); 
+
+
+}
+
+void simple_sfm::Frame::GetGoodMatches(const cv::String &img_a_, const cv::String &img_b_,  KeyPoints &kp_a_,  KeyPoints &kp_b_, Matches &good_matches_)
 {
 
     assert(("[frames.cpp]", (int)good_matches_.size() == 0));
@@ -64,7 +107,6 @@ void simple_sfm::Frame::GetGoodMatches(const cv::String &img_a_, const cv::Strin
 void simple_sfm::Frame::ExtractKeyPoints(const cv::String &img_a_, const cv::String &img_b_, KeyPoints &kp_1, KeyPoints &kp_2) 
 {   
 
-
     cv::Mat image_one, image_two;
     
     cv::Mat img_1 = cv::imread(img_a_.c_str());
@@ -102,12 +144,10 @@ void simple_sfm::Frame::ExtractKeyPoints(const cv::String &img_a_, const cv::Str
 
 }
 
-
-void simple_sfm::Frame::ExtractMatchingKeyPoints(KP &kp_a_, KP &kp_b_, Matches good_matches_, KP &kp_a_mat_, KP &kp_b_mat_)
+void simple_sfm::Frame::ExtractMatchingKeyPoints(const KP &kp_a_, const KP &kp_b_, const Matches good_matches_, KP &kp_a_mat_, KP &kp_b_mat_)
 {   
 
     assert(("[frames.cpp]", (int)kp_a_.size() == (int)kp_b_.size()));
-
 
     for (auto match : good_matches_) {
         
@@ -115,6 +155,5 @@ void simple_sfm::Frame::ExtractMatchingKeyPoints(KP &kp_a_, KP &kp_b_, Matches g
         kp_b_mat_.push_back(kp_b_[match.trainIdx]);
 
     }
-
 
 }
