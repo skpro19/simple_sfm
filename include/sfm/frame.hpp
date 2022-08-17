@@ -26,17 +26,23 @@ namespace simple_sfm{
             
             static void ExtractMatchingKeyPoints(const KP &kp_a_, const KP &kp_b_, const Matches good_matches_, KP &kp_a_mat_, KP &kp_b_mat_);
             
-            static void Points2DFromKeyPoints(const KP &kp_ , Points2D &points_);
+            static void Points2DFromKeyPoints(const KP &kp_ , Points2D &points_);   
 
             static void Points2DFromFrames(const cv::String &img_a_, const cv::String &img_b_, Points2D &pts_a_ , Points2D &pts_b_);
 
-            static double GetAbsoluteScale(const cv::Mat &curr_pose_ , const cv::Mat &prev_pose_);
+            static double GetAbsoluteScale(const cv::Matx34f &curr_pose_ , const cv::Matx34f &prev_pose_);
+
+            
 
         private:
 
-            static cv::Ptr<cv::ORB>         orb_;
-            Poses                           gt_poses_;
+            static inline cv::Ptr<cv::ORB>  orb_ = cv::ORB::create(5000);
 
+
+            Poses   gt_poses_;   //using Poses = std::vector<cv::Mat>
+
+            
+            
 
 
 

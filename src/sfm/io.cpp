@@ -138,7 +138,7 @@ void simple_sfm::SFM_IO::LoadGTPoses(const std::string &gt_file_name_)
 
             gt_poses_.push_back(gt_);
 
-            std::cout << "[io]  gt_: " << gt_ << std::endl;
+            //std::cout << "[io]  gt_: " << gt_ << std::endl;
 
         }
 

@@ -40,7 +40,7 @@ namespace simple_sfm{
             cv::Matx33f getR0()                                         const   {   return R0_; }
             cv::Matx41f gett0()                                         const   {   return t0_; }
             void getImageFileNames(std::vector<cv::String> &list_)      const   {   list_ = image_file_names_; }
-
+            void getGTPoses(std::vector<cv::Matx34f> &list_)            const   {   list_ = gt_poses_; }
 
         private:
 

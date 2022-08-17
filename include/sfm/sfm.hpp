@@ -3,8 +3,7 @@
 
 
 #include "io.hpp"
-#include "ds.hpp"
-
+#include "frame.hpp"
 
 
 namespace simple_sfm{
@@ -32,7 +31,7 @@ namespace simple_sfm{
 
             cv::String                                  F0_, F1_;       //last and current frames
 
-            Poses                                       gt_poses_;
+            std::vector<cv::Matx34f>                    gt_poses_;
     };
 
 
