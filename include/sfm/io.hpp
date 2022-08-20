@@ -35,12 +35,12 @@ namespace simple_sfm{
             SFM_IO(const std::string &base_folder_);
 
             //getters
-            cv::Matx33f getK()                                          const   {   return K_;  }
-            cv::Matx34f getP0()                                         const   {   return P0_; }
-            cv::Matx33f getR0()                                         const   {   return R0_; }
-            cv::Matx41f gett0()                                         const   {   return t0_; }
+            cv::Matx33d getK()                                          const   {   return K_;  }
+            cv::Matx34d getP0()                                         const   {   return P0_; }
+            cv::Matx33d getR0()                                         const   {   return R0_; }
+            cv::Matx41d gett0()                                         const   {   return t0_; }
             void getImageFileNames(std::vector<cv::String> &list_)      const   {   list_ = image_file_names_; }
-            void getGTPoses(std::vector<cv::Matx34f> &list_)            const   {   list_ = gt_poses_; }
+            void getGTPoses(std::vector<cv::Matx34d> &list_)            const   {   list_ = gt_poses_; }
 
         private:
 
@@ -61,12 +61,12 @@ namespace simple_sfm{
             const std::string               gt_file_name_;
             const std::string               image_dir_;
 
-            cv::Matx34f                     P0_;                            //initial projection matrix
-            cv::Matx33f                     K_;
-            cv::Matx33f                     R0_;
-            cv::Matx41f                     t0_;
+            cv::Matx34d                     P0_;                            //initial projection matrix
+            cv::Matx33d                     K_;
+            cv::Matx33d                     R0_;
+            cv::Matx41d                     t0_;
 
-            std::vector<cv::Matx34f>        gt_poses_;
+            std::vector<cv::Matx34d>        gt_poses_;
             std::vector<cv::String>         image_file_names_;
 
 

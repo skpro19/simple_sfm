@@ -19,7 +19,7 @@ void simple_sfm::Frame::Points2DFromKeyPoints(const KP &kp_ , Points2D &points_)
 
 }
 
-double simple_sfm::Frame::GetAbsoluteScale(const cv::Matx34f &curr_pose_ , const cv::Matx34f &prev_pose_)
+double simple_sfm::Frame::GetAbsoluteScale(const cv::Matx34d &curr_pose_ , const cv::Matx34d &prev_pose_)
 {
 
     //std::cout << "[frame]: GetAbsoluteScale" << std::endl;
@@ -50,7 +50,7 @@ void simple_sfm::Frame::Points2DFromFrames(const cv::String &img_a_, const cv::S
 
 
     Matches good_matches_ ; 
-    GetGoodMatches(img_a_, img_b_, kp_a_, kp_b_, good_matches_);
+    ExtractGoodMatches(img_a_, img_b_, kp_a_, kp_b_, good_matches_);
 
     //std::cout << "[frames] H1" << std::endl;
 
@@ -66,7 +66,7 @@ void simple_sfm::Frame::Points2DFromFrames(const cv::String &img_a_, const cv::S
 
 }
 
-void simple_sfm::Frame::GetGoodMatches(const cv::String &img_a_, const cv::String &img_b_,  KeyPoints &kp_a_,  KeyPoints &kp_b_, Matches &good_matches_)
+void simple_sfm::Frame::ExtractGoodMatches(const cv::String &img_a_, const cv::String &img_b_,  KeyPoints &kp_a_,  KeyPoints &kp_b_, Matches &good_matches_)
 {
 
     assert(("[frames.cpp]", (int)good_matches_.size() == 0));

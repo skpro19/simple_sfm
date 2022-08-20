@@ -10,7 +10,7 @@ simple_sfm::SFM_IO::SFM_IO(const std::string &base_folder_)
                                                     ,image_dir_("image_0/")
 {
 
-    std::cout << "[io]: Inside IO constructor!" << std::endl;
+   // std::cout << "[io]: Inside IO constructor!" << std::endl;
     LoadDataFiles();
 
 }
@@ -30,11 +30,11 @@ void simple_sfm::SFM_IO::LoadDataFiles()
 void simple_sfm::SFM_IO::LoadProjectionMatrix(const std::string &calib_file_name_)
 {
 
-    std::cout << "[io]: Inside the LoadProjectionMatrix function!" << std::endl;
+    //std::cout << "[io]: Inside the LoadProjectionMatrix function!" << std::endl;
 
     std::string calib_file_ = data_dir_ + calib_file_name_;
     
-    std::cout << "[io]  calib_file_path_: " << calib_file_ << std::endl;
+    //std::cout << "[io]  calib_file_path_: " << calib_file_ << std::endl;
 
 
     std::ifstream calib_;
@@ -69,7 +69,7 @@ void simple_sfm::SFM_IO::LoadProjectionMatrix(const std::string &calib_file_name
 
         P0_ = cv::Mat(v_).reshape(0, 3);
 
-        std::cout << "[io]  P0_: " << P0_ << std::endl;
+        //std::cout << "[io]  P0_: " << P0_ << std::endl;
 
         
     }
@@ -77,7 +77,7 @@ void simple_sfm::SFM_IO::LoadProjectionMatrix(const std::string &calib_file_name
 
     else {
 
-        std::cerr << "Unable to read calib file!" << std::endl;
+        //std::cerr << "Unable to read calib file!" << std::endl;
 
     }
 
@@ -89,22 +89,20 @@ void simple_sfm::SFM_IO::LoadProjectionMatrix(const std::string &calib_file_name
 void simple_sfm::SFM_IO::LoadCameraParamsMatrix()
 {
 
-    std::cout << "[io] Inside the LoadCameraParamsMatrix function!" << std::endl;
+    //std::cout << "[io] Inside the LoadCameraParamsMatrix function!" << std::endl;
     cv::decomposeProjectionMatrix(P0_, K_, R0_, t0_);
 
-    std::cout << "[io]  K_: " << K_ << std::endl;
-    std::cout << "[io]  R0_: " << R0_ << std::endl;
-    std::cout << "[io]  t0_: " << t0_ << std::endl;
+    //std::cout << "[io]  K_: " << K_ << std::endl;
+    //std::cout << "[io]  R0_: " << R0_ << std::endl;
+    //std::cout << "[io]  t0_: " << t0_ << std::endl;
 
     
 }
 
-
-
 void simple_sfm::SFM_IO::LoadGTPoses(const std::string &gt_file_name_)
 {
 
-    std::cout << "[io] Inside the LoadGTPoses function!" << std::endl;
+    //std::cout << "[io] Inside the LoadGTPoses function!" << std::endl;
 
     std::string gt_file_ = data_dir_ + gt_file_name_;
     
