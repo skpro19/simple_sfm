@@ -5,6 +5,9 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 {
 
     io_ = std::make_shared<SFM_IO>(base_folder_);
+   /// bkp_ = std::make_shared<BookKeeping>();
+
+
     updateIOParams();
     
 }
@@ -138,7 +141,8 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
 void simple_sfm::SimpleSFM::InitializeSFMPipeline() 
 {
- 
+    //TODO- Make intialization more robust and generic
+    
     std::cout << "[sfm] InitializeSFMPipeline function!" << std::endl;
 
     bool initialized_ = false; 
@@ -194,5 +198,57 @@ void simple_sfm::SimpleSFM::InitializeSFMPipeline()
         }     
     }
 
+    
+    //updating P1
+    assert(("[sfm]" , P1_(0,0) == 0.0));
+
+    cv::hconcat(R, t, P1_);
+
+    P1_ = K_ * P1_;
+
+    std::cout << "[sfm] P0: " << P0_ << std::endl;
+
+    std::cout << "[sfm] P1: " << P1_ << std::endl;
+
+    //initial triangulation
+    cv::Mat points4d_;
+    cv::triangulatePoints(P0_, P1_, pts_last_, pts_curr_, points4d_);
+
+    std::cout << "[sfm] pts_last_.size(): " << pts_last_.size() << std::endl;
+    std::cout << "[sfm] points4d_.size(): " << points4d_.size() << std::endl;
+
+    bkp_->updatePointCloudMap(pts_curr_, points4d_);
+    
 }
+
+
+
+void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_) {
+
+
+    assert(("[sfm]" , frame_idx_ > 1));
+
+    int last_idx_ = frame_idx_ - 1; 
+
+    cv::String last_frame_ = image_file_list_[last_idx_]; 
+    cv::String curr_frame_ = image_file_list_[frame_idx_];
+
+    Points2D last_pts_, curr_pts_;    
+    Frame::Points2DFromFrames(last_frame_, curr_frame_, last_pts_, curr_pts_);
+
+    assert(("[sfm]" , (int)last_pts_.size() == (int)curr_pts_.size()));
+
+    Points3D object_points_;
+    Points2D image_points_;
+
+    //update object_points_ and image_points_
+    //bkp_->addNextFrame(last_pts_, curr_pts_, object_points_, image_points_);
+
+    //getRandT
+    //triangulateAndUpdateGlobalPointCloud
+    
+
+
+}
+
 

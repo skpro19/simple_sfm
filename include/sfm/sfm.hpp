@@ -4,6 +4,7 @@
 
 #include "io.hpp"
 #include "frame.hpp"
+#include "bookkeeping.hpp"
 
 
 namespace simple_sfm{
@@ -14,16 +15,25 @@ namespace simple_sfm{
 
             SimpleSFM(const std::string &base_folder_);
 
-            void InitializeSFMPipeline();
 
             void updateIOParams();
-
-            //debugging function
             void runVOPipeline();
+
+
+            void InitializeSFMPipeline();
+            void runSFMPipeline();
+            void addNextFrame(int frame_idx_);
+
+            
+
+
+
 
         private:
 
             std::shared_ptr<SFM_IO>                     io_;
+            std::shared_ptr<BookKeeping>                bkp_;
+            
             std::vector<cv::String>                     image_file_list_;
 
             cv::Matx34d                                 P0_, P1_;
