@@ -5,6 +5,7 @@
 #include "io.hpp"
 #include "frame.hpp"
 #include "bookkeeping.hpp"
+#include "sfm_utility.hpp"
 
 
 namespace simple_sfm{
@@ -17,18 +18,18 @@ namespace simple_sfm{
 
 
             void updateIOParams();
-            void runVOPipeline();
+            
 
-
-            void InitializeSFMPipeline();
+            void initializeSFMPipeline();
             void runSFMPipeline();
             void addNextFrame(int frame_idx_);
 
-            
+
+            //debugging functions
+            void runVOPipeline();
 
 
-
-
+          
         private:
 
             std::shared_ptr<SFM_IO>                     io_;
@@ -36,10 +37,11 @@ namespace simple_sfm{
             
             std::vector<cv::String>                     image_file_list_;
 
-            cv::Matx34d                                 P0_, P1_;
             cv::Matx33d                                 K_;
-            cv::Matx33d                                 R0_, R1_;
-            cv::Matx41d                                 t0_, t1_;
+            cv::Matx34d                                 P_prev_;
+            cv::Matx33d                                 R_prev_;
+            cv::Matx31d                                 t_prev_;
+            cv::Matx34d                                 C_prev_;
 
 
             cv::String                                  F0_, F1_;       //last and current frames
