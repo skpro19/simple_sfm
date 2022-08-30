@@ -1,11 +1,14 @@
 #include "../../include/sfm/sfm.hpp"
+#include "../../include/sfm/sfm_utility.hpp"
+
+#include <opencv2/calib3d.hpp>
 
 
 simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_) 
 {
 
     io_ = std::make_shared<SFM_IO>(base_folder_);
-   /// bkp_ = std::make_shared<BookKeeping>();
+    bkp_ = std::make_shared<BookKeeping>();
 
 
     updateIOParams();
@@ -34,7 +37,7 @@ void simple_sfm::SimpleSFM::runSFMPipeline(){
 
     int num_frames_ = (int)image_file_list_.size() ; 
 
-    int frame_idx_ = 1; 
+    int frame_idx_ = 2; 
 
     while(frame_idx_ < num_frames_) {
 
@@ -50,6 +53,7 @@ void simple_sfm::SimpleSFM::runSFMPipeline(){
 void simple_sfm::SimpleSFM::initializeSFMPipeline() 
 {
 
+    //CV_Assert(1 > 2);
     //TODO- Make intialization more robust and generic
     
     std::cout << "[sfm] InitializeSFMPipeline function!" << std::endl;
@@ -67,7 +71,7 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
     
     double scale_; 
         
-    std::cout << "curr_idx_: " << curr_idx_ << std::endl;
+    std::cout << "[sfm] curr_idx_: " << curr_idx_ << std::endl;
 
     pts_curr_.resize(0);
     pts_last_.resize(0);
@@ -83,7 +87,7 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
 
     scale_ = Frame::GetAbsoluteScale(gt_poses_[last_idx_], gt_poses_[curr_idx_]);
 
-    std::cout << "scale_: " << scale_ << std::endl;
+    std::cout << "[sfm] scale_: " << scale_ << std::endl;
 
     curr_idx_++; 
 
@@ -103,6 +107,8 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
     assert(("[sfm]" , t.size() == cv::Size(1, 3)));
     assert(("[sfm]" , R.size() == cv::Size(3, 3)));
 
+    std::cout << "[sfm] H1" << std::endl;
+
     //transform between kth and (k+1)th frame
     cv::Matx44d T_k_ = {
                             R.at<double>(0, 0),  R.at<double>(0, 1),  R.at<double>(0,2) , t.at<double>(0 , 0),
@@ -117,29 +123,53 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
 
     P1_ = K_ * C1_;
 
-    
+    std::cout << "[sfm] H2" << std::endl;
+
 
     //initial triangulation
+    //cv::Mat pts_4d_(4,pts_last_.size(),CV_32F);
     cv::Mat pts_4d_;
     cv::triangulatePoints(P0_, P1_, pts_last_, pts_curr_, pts_4d_);
+    
+    /*pts_4d_ = pts_4d_.t(); 
+
+    int num_pts_ = (int)pts_last_.size();
+   
+    //std::cout << "[sfm] pts_4d_.depth: " << pts_4d_.depth() << std::endl;
+
+    std::vector<Point3D> pts_3d_(num_pts_);
+    
+    cv::convertPointsFromHomogeneous(pts_4d_, pts_3d_);
+
+    std::cout << "[sfm] H2.5 " << std::endl;
+    std::cout << "[sfm] pts_3d_.size(): " << pts_3d_.size() << std::endl;
+    */
+
+    std::vector<Point3D> pts_3d_;
+    convertPointsFromHomogeneous(pts_4d_, pts_3d_);
+
+    bkp_->initializeGlobalPointCloud(pts_3d_);
+    
+    std::cout << "[sfm] H3 " << std::endl;
+
+    bkp_->initialize2D3DCorrespondance(pts_curr_, pts_3d_);
+    std::cout << "[sfm] H4" << std::endl;
+
 
     P_prev_ = P1_;
     C_prev_ = C1_;
 
-    std::vector<Point3D> pts_3d_;
-    cv::convertPointsFromHomogeneous(pts_4d_ , pts_3d_);
 
-    bkp_->initializeGlobalPointCloud(pts_3d_);
+    std::cout << "[sfm] H5" << std::endl;
 
-    bkp_->update2D3DCorrespondance(pts_curr_, pts_3d_);
-    
 }
 
 
 
 void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_) {
-
-    assert(("[sfm]" , frame_idx_ > 1));
+    
+    std::cout << "[sfm] ---> addNextFrame ---> frame_idx_: " << frame_idx_ << std::endl;
+    assert(("[sfm]" , frame_idx_ > 0));
 
     int last_idx_ = frame_idx_ - 1; 
 
@@ -170,14 +200,19 @@ void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_) {
     std::cout << "[sfm] rvec_.size(): " << rvec_.size() << std::endl; 
     std::cout << "[sfm] tvec_.size(): " << tvec_.size() << std::endl; 
     
-    cv::Mat R, t; 
+    cv::Mat R, t(tvec_); 
     cv::Rodrigues(rvec_, R); 
-    cv::Rodrigues(tvec_, t); 
+    //cv::Rodrigues(tvec_, t); 
+
+    std::cout << "[sfm] R.size(): " << R.size() << std::endl;
+    std::cout << "[sfm] t.size(): " << t.size() << std::endl;
+
+    std::cout << "[sfm] R: " << R << std::endl;
+    std::cout << "[sfm] t: " << t << std::endl;
 
     assert(("[sfm]" , R.size() == cv::Size(3, 3)));
     assert(("[sfm]" , t.size() == cv::Size(1, 3)));
     
-    cv::Matx34d P0_, P1_;
 
     cv::Matx34d C_;
 
@@ -201,10 +236,10 @@ void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_) {
     cv::Mat pts_4d_;
     cv::triangulatePoints(P0_, P1_, last_pts_, curr_pts_, pts_4d_);  
 
+    
     std::vector<Point3D> pts_3d_; 
-
-    cv::convertPointsFromHomogeneous(pts_4d_, pts_3d_);
-
+    convertPointsFromHomogeneous(pts_4d_, pts_3d_);
+    
     bkp_->updateGlobalPointCloud(curr_pts_, pts_3d_);
 
     P_prev_ = P1_; 

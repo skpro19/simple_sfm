@@ -1,5 +1,5 @@
-#ifndef IMGPROCESS_H
-#define IMGPROCESS_H
+#ifndef FRAME_H
+#define FRAME_H
 
 
 //  ======================================================================

@@ -5,8 +5,6 @@
 #include "io.hpp"
 #include "frame.hpp"
 #include "bookkeeping.hpp"
-#include "sfm_utility.hpp"
-
 
 namespace simple_sfm{
 
