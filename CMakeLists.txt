@@ -21,6 +21,7 @@ add_executable(simple_sfm
     src/sfm/frame.cpp
     src/sfm/bookkeeping.cpp
     src/sfm/sfm_util.cpp
+    src/sfm/vis.cpp
 )
 
 target_link_libraries(simple_sfm

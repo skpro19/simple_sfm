@@ -9,6 +9,9 @@
 #include "sfm.hpp"
 
 
+#include <opencv2/viz/types.hpp>
+
+
 
 namespace simple_sfm {
 
@@ -18,14 +21,15 @@ namespace simple_sfm {
 
             Vis();
 
-            static void drawKeyPoints(const KeyPoints &kp_a_, const KeyPoints &kp_b_);
-            
-
-
+            static void drawKeyPoints(cv::Mat &mat_, const Points2D &kp_a_, const Points2D &kp_b_);
+            static void drawKeyPoints(cv::Mat &mat_, const Points2D &kp_a_);
+            static void displayFrame(const cv::Mat &frame_);
 
         private:
 
-            static cv::Mat mat_;
+            //static inline cv::Mat mat_= cv::Mat::zeros(800, 500, CV_8UC3);
+            
+        
 
 
 

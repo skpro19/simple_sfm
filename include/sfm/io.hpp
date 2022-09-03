@@ -41,6 +41,8 @@ namespace simple_sfm{
             cv::Matx41d gett0()                                         const   {   return t0_; }
             void getImageFileNames(std::vector<cv::String> &list_)      const   {   list_ = image_file_names_; }
             void getGTPoses(std::vector<cv::Matx34d> &list_)            const   {   list_ = gt_poses_; }
+            
+            cv::Mat getFrame(const int &idx_) const;
 
         private:
 
@@ -52,6 +54,7 @@ namespace simple_sfm{
             void LoadGTPoses(const std::string &gt_file_name_);
             void LoadImageFiles(const std::string &img_folder_name_);
 
+            
             
             //variables
 

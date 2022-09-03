@@ -154,6 +154,14 @@ void simple_sfm::SFM_IO::LoadGTPoses(const std::string &gt_file_name_)
 }
 
 
+cv::Mat simple_sfm::SFM_IO::getFrame(const int &idx_) const
+{
+    assert(("[io]" , idx_ > 0));
+    
+    cv::Mat mat_ = cv::imread(image_file_names_[idx_].c_str());
+    return mat_;
+
+}
 
 void simple_sfm::SFM_IO::LoadImageFiles(const std::string &img_folder_name_)
 {

@@ -1,5 +1,4 @@
 #include "../../include/sfm/sfm.hpp"
-#include "../../include/sfm/sfm_utility.hpp"
 
 #include <opencv2/calib3d.hpp>
 
@@ -7,10 +6,9 @@
 simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_) 
 {
 
-    io_ = std::make_shared<SFM_IO>(base_folder_);
-    bkp_ = std::make_shared<BookKeeping>();
-
-
+    io_     =   std::make_shared<SFM_IO>(base_folder_);
+    bkp_    =   std::make_shared<BookKeeping>();
+  
     updateIOParams();
     
 }
@@ -63,7 +61,7 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
     int last_idx_ = 0 ;
     int curr_idx_ = 1;
     int inlier_cnt_ = 0 ;
-    
+
     double scale_; 
         
     std::cout << "[sfm] curr_idx_: " << curr_idx_ << std::endl;
@@ -75,6 +73,7 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
     F1_ = image_file_list_[curr_idx_];
 
     Frame::Points2DFromFrames(F0_, F1_, pts_last_, pts_curr_);   
+
     
     E_ = cv::findEssentialMat(pts_curr_, pts_last_, K_, cv::RANSAC, 0.999, 1.0, E_mask_);
     
@@ -141,7 +140,8 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
 
 
 
-void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_) {
+void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_) 
+{
     
     std::cout << "[sfm] ---> addNextFrame ---> frame_idx_: " << frame_idx_ << std::endl;
     assert(("[sfm]" , frame_idx_ > 0));
@@ -168,23 +168,16 @@ void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_) {
     bool flag_ = cv::solvePnPRansac(object_points_, image_points_, K_,cv::Mat(), rvec_, tvec_);
 
     assert(("[sfm]" , flag_));
+    
 
-    //std::cout << "[sfm] rvec_: " << rvec_ << std::endl; 
-    //std::cout << "[sfm] tvec_: " << tvec_ << std::endl; 
+    cv::Mat frame_ = io_->getFrame(frame_idx_);
     
-    //std::cout << "[sfm] rvec_.size(): " << rvec_.size() << std::endl; 
-    //std::cout << "[sfm] tvec_.size(): " << tvec_.size() << std::endl; 
-    
+    Vis::displayFrame(frame_);
+    Vis::drawKeyPoints(frame_, image_points_);
+
     cv::Mat R, t(tvec_); 
     cv::Rodrigues(rvec_, R); 
-    //cv::Rodrigues(tvec_, t); 
-
-    ///std::cout << "[sfm] R.size(): " << R.size() << std::endl;
-    //std::cout << "[sfm] t.size(): " << t.size() << std::endl;
-
-    //std::cout << "[sfm] R: " << R << std::endl;
-    //std::cout << "[sfm] t: " << t << std::endl;
-
+   
     assert(("[sfm]" , R.size() == cv::Size(3, 3)));
     assert(("[sfm]" , t.size() == cv::Size(1, 3)));
     

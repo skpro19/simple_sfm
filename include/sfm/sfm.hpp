@@ -1,7 +1,13 @@
 #ifndef SFM_H
 #define SFM_H
 
+// ========================================================
+// =============   Core SFM functions     =================
+// ========================================================
+
 #include "bookkeeping.hpp"
+#include "sfm_utility.hpp"
+#include "vis.hpp"
 
 namespace simple_sfm{
 
