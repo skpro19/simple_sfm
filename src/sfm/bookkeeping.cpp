@@ -35,10 +35,16 @@ void simple_sfm::BookKeeping::initialize2D3DCorrespondance(const std::vector<Poi
 
         Point2D pt_2d_ = pts_2d_[i]; 
         Point3D pt_3d_ = pts_3d_[i]; 
+        
+        if(corr_2d_to_3d_.count(pt_2d_)) {std::cout << "FOUND" << std::endl;}
+        //std::cout << i << " " << pt_2d_ << " " << pt_3d_ << std::endl;
+
 
         corr_2d_to_3d_[pt_2d_] = pt_3d_;
 
     }
+    std::cout << "[bkp] pts_2d_.size(): " << (int)pts_2d_.size() << " corr_2d_to_3d_.size(): " << (int)corr_2d_to_3d_.size() << std::endl;
+    assert(("[bkp]" , pts_2d_.size() == (int)corr_2d_to_3d_.size()));
 
 }
 
@@ -114,6 +120,8 @@ void simple_sfm::BookKeeping::updateGlobalPointCloud(const Points2D &pts_2d_, Po
 
     std::cout << "[bkp] Before updating ----> global_point_cloud.size() " << (int)global_point_cloud_.size() << std::endl;
 
+    Points2D pts_;
+
     for(int i = 0 ;i < n_; i++) {
 
         Point3D pt_3d_ = pts_3d_[i] ; 
@@ -127,13 +135,22 @@ void simple_sfm::BookKeeping::updateGlobalPointCloud(const Points2D &pts_2d_, Po
             cnt_++; 
         }
 
+        if(corr_2d_to_3d_.count(pt_2d_)) {
+
+            pts_.push_back(pt_2d_);
+
+        }
+
         corr_2d_to_3d_[pt_2d_] = pt_3d_;
+        //std::cout << "[bkp] i: " << i << " [corr_2d_to_3d_].size(): " << (int)corr_2d_to_3d_.size() << std::endl;
+        //std::cout << "[bkp] pt_2d_: " << pt_2d_ << std::endl;
+
         
     }
 
-
     std::cout << "[bkp] " << cnt_ << " insertions made to global_point_cloud!" << std::endl;
 
+    std::cout << "[bkp] n_: " << n_ << std::endl;
     std::cout << "[bkp] pts_2d_.size(): " << pts_2d_.size() << std::endl;
     std::cout << "[bkp] corr_2d_to_3d_.size(): " << (int)corr_2d_to_3d_.size() << std::endl;
     

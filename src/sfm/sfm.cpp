@@ -53,8 +53,6 @@ void simple_sfm::SimpleSFM::runSFMPipeline(){
 void simple_sfm::SimpleSFM::initializeSFMPipeline() 
 {
 
-    //CV_Assert(1 > 2);
-    //TODO- Make intialization more robust and generic
     
     std::cout << "[sfm] InitializeSFMPipeline function!" << std::endl;
 
@@ -79,7 +77,16 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
     F0_ = image_file_list_[last_idx_];
     F1_ = image_file_list_[curr_idx_];
 
-    Frame::Points2DFromFrames(F0_, F1_, pts_last_, pts_curr_);    
+    Frame::Points2DFromFrames(F0_, F1_, pts_last_, pts_curr_);   
+
+    std::cout << "[sfm - initializeSFMPipeline] pts_last_.size(): " << (int)pts_last_.size() << " pts_curr_.size(): " << (int)pts_curr_.size() << std::endl;
+
+    
+    for(auto t: pts_curr_) s_curr_.insert(t); 
+    for(auto t: pts_last_) s_last_.insert(t); 
+    
+    std::cout << "[sfm - initializeSFMPipeline] s_last_.size(): " << (int)s_last_.size() << " s_curr.size(): " << (int)s_curr_.size() << std::endl;
+
     
     E_ = cv::findEssentialMat(pts_curr_, pts_last_, K_, cv::RANSAC, 0.999, 1.0, E_mask_);
     
@@ -87,7 +94,7 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
 
     scale_ = Frame::GetAbsoluteScale(gt_poses_[last_idx_], gt_poses_[curr_idx_]);
 
-    std::cout << "[sfm] scale_: " << scale_ << std::endl;
+    //std::cout << "[sfm] scale_: " << scale_ << std::endl;
 
     curr_idx_++; 
 
@@ -98,7 +105,7 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
     P0_ = P_prev_;
 
     C0_ =  {    
-                R_prev_(0, 0),  R_prev_(0, 1),  R_prev_(0,2) , t_prev_(0 , 0),
+                R_prev_(0, 0),  R_prev_(0, 1),  R_prev_(0,2) , t_prev_(0,0),
                 R_prev_(1, 0),  R_prev_(1, 1),  R_prev_(1, 2), t_prev_(1,0),
                 R_prev_(2, 0),  R_prev_(2, 1),  R_prev_(2, 2), t_prev_(2,0)
             
@@ -111,9 +118,9 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
 
     //transform between kth and (k+1)th frame
     cv::Matx44d T_k_ = {
-                            R.at<double>(0, 0),  R.at<double>(0, 1),  R.at<double>(0,2) , t.at<double>(0 , 0),
-                            R.at<double>(1, 0),  R.at<double>(1, 1),  R.at<double>(1, 2), t.at<double>(1,0),
-                            R.at<double>(2, 0),  R.at<double>(2, 1),  R.at<double>(2, 2), t.at<double>(2,0),
+                            R.at<double>(0, 0),  R.at<double>(0, 1),  R.at<double>(0, 2), t.at<double>(0, 0),
+                            R.at<double>(1, 0),  R.at<double>(1, 1),  R.at<double>(1, 2), t.at<double>(1, 0),
+                            R.at<double>(2, 0),  R.at<double>(2, 1),  R.at<double>(2, 2), t.at<double>(2, 0),
                             0 , 0 , 0 ,1
 
                         };
@@ -131,20 +138,6 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
     cv::Mat pts_4d_;
     cv::triangulatePoints(P0_, P1_, pts_last_, pts_curr_, pts_4d_);
     
-    /*pts_4d_ = pts_4d_.t(); 
-
-    int num_pts_ = (int)pts_last_.size();
-   
-    //std::cout << "[sfm] pts_4d_.depth: " << pts_4d_.depth() << std::endl;
-
-    std::vector<Point3D> pts_3d_(num_pts_);
-    
-    cv::convertPointsFromHomogeneous(pts_4d_, pts_3d_);
-
-    std::cout << "[sfm] H2.5 " << std::endl;
-    std::cout << "[sfm] pts_3d_.size(): " << pts_3d_.size() << std::endl;
-    */
-
     std::vector<Point3D> pts_3d_;
     convertPointsFromHomogeneous(pts_4d_, pts_3d_);
 
@@ -194,21 +187,21 @@ void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_) {
 
     assert(("[sfm]" , flag_));
 
-    std::cout << "[sfm] rvec_: " << rvec_ << std::endl; 
-    std::cout << "[sfm] tvec_: " << tvec_ << std::endl; 
+    //std::cout << "[sfm] rvec_: " << rvec_ << std::endl; 
+    //std::cout << "[sfm] tvec_: " << tvec_ << std::endl; 
     
-    std::cout << "[sfm] rvec_.size(): " << rvec_.size() << std::endl; 
-    std::cout << "[sfm] tvec_.size(): " << tvec_.size() << std::endl; 
+    //std::cout << "[sfm] rvec_.size(): " << rvec_.size() << std::endl; 
+    //std::cout << "[sfm] tvec_.size(): " << tvec_.size() << std::endl; 
     
     cv::Mat R, t(tvec_); 
     cv::Rodrigues(rvec_, R); 
     //cv::Rodrigues(tvec_, t); 
 
-    std::cout << "[sfm] R.size(): " << R.size() << std::endl;
-    std::cout << "[sfm] t.size(): " << t.size() << std::endl;
+    ///std::cout << "[sfm] R.size(): " << R.size() << std::endl;
+    //std::cout << "[sfm] t.size(): " << t.size() << std::endl;
 
-    std::cout << "[sfm] R: " << R << std::endl;
-    std::cout << "[sfm] t: " << t << std::endl;
+    //std::cout << "[sfm] R: " << R << std::endl;
+    //std::cout << "[sfm] t: " << t << std::endl;
 
     assert(("[sfm]" , R.size() == cv::Size(3, 3)));
     assert(("[sfm]" , t.size() == cv::Size(1, 3)));
@@ -218,7 +211,7 @@ void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_) {
 
     //computes the transform between C_prev_ and C_;
     cv::Matx44d T_k_ = {
-                            R.at<double>(0, 0),  R.at<double>(0, 1),  R.at<double>(0,2) , t.at<double>(0 , 0),
+                            R.at<double>(0, 0),  R.at<double>(0, 1),  R.at<double>(0,2) , t.at<double>(0,0),
                             R.at<double>(1, 0),  R.at<double>(1, 1),  R.at<double>(1, 2), t.at<double>(1,0),
                             R.at<double>(2, 0),  R.at<double>(2, 1),  R.at<double>(2, 2), t.at<double>(2,0),
                             0 , 0 , 0 ,1

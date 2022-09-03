@@ -10,6 +10,15 @@
 
 namespace simple_sfm {
 
+    struct compare {
+        bool operator() (const Point2D& a_, const Point2D& b_) const {
+            
+            return ((a_.x < b_.x) ||((a_.x == b_.x) && (a_.y < b_.y))); // if x<y then x will come before y. Change this condition as per requirement
+        
+        }
+    };
+            
+
     class BookKeeping{
 
         public: 
@@ -32,17 +41,10 @@ namespace simple_sfm {
             
         private:
 
-            struct cmpPoint2D {
                 
-                bool operator()(const cv::Point& a, const Point2D &b) const {
-                    
-                    return ((a.x > b.x) || ((a.x == b.x) && (a.y > b.y)));
-                
-                }
-            };
-
+            
             std::vector<Point3D> global_point_cloud_;
-            std::map<Point2D, Point3D, cmpPoint2D> corr_2d_to_3d_;
+            std::map<Point2D, Point3D, compare> corr_2d_to_3d_;
             
 
             //TODO ---> TUNE

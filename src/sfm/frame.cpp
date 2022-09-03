@@ -1,4 +1,6 @@
 #include "../../include/sfm/frame.hpp"
+#include "../../include/sfm/sfm_utility.hpp"
+
 
 
 simple_sfm::Frame::Frame() {
@@ -40,29 +42,21 @@ double simple_sfm::Frame::GetAbsoluteScale(const cv::Matx34d &curr_pose_ , const
 void simple_sfm::Frame::Points2DFromFrames(const cv::String &img_a_, const cv::String &img_b_, Points2D &pts_a_, Points2D &pts_b_) 
 {
 
-    //std::cout << "[frames] Point2DFromFrames" << std::endl;
-
-
     KeyPoints kp_a_ , kp_b_;  
     ExtractKeyPoints(img_a_, img_b_, kp_a_, kp_b_);
-
-   // std::cout << "[frames] H0" << std::endl;
-
 
     Matches good_matches_ ; 
     ExtractGoodMatches(img_a_, img_b_, kp_a_, kp_b_, good_matches_);
 
-    //std::cout << "[frames] H1" << std::endl;
-
     KeyPoints kp_a_mat_, kp_b_mat_;
     ExtractMatchingKeyPoints(kp_a_, kp_b_, good_matches_, kp_a_mat_, kp_b_mat_);
-
-    //std::cout << "[frames] H2" << std::endl;
 
     Points2DFromKeyPoints(kp_a_mat_, pts_a_);
     Points2DFromKeyPoints(kp_b_mat_, pts_b_); 
 
-   // std::cout << "[frames] H3" << std::endl;
+    //std::cout << "[frames] pts_a_.size(): " << (int)pts_a_.size() << std::endl;
+    //sstd::cout << "[frames] pts_b_.size(): " << (int)pts_b_.size() << std::endl;
+    
 
 }
 
@@ -70,7 +64,7 @@ void simple_sfm::Frame::ExtractGoodMatches(const cv::String &img_a_, const cv::S
 {
 
     assert(("[frames.cpp]", (int)good_matches_.size() == 0));
-    assert(("[frames.cpp]", (int)kp_a_.size() == (int)kp_b_.size()));
+    //assert(("[frames.cpp]", (int)kp_a_.size() == (int)kp_b_.size()));
 
     
     cv::Mat img_1 = cv::imread(img_a_.c_str());
@@ -96,24 +90,41 @@ void simple_sfm::Frame::ExtractGoodMatches(const cv::String &img_a_, const cv::S
 
     Matches brute_hamming_matches;
     matcher->match(des_1, des_2, brute_hamming_matches);
+  
+    int n_ = (int)brute_hamming_matches.size();
 
-    double min_dist=10000, max_dist=0;
+    std::cout << "[frame] brute_hamming_matches.size(): " << brute_hamming_matches.size() << std::endl;
+  
+    std::sort(brute_hamming_matches.begin(), brute_hamming_matches.end(), [](const cv::DMatch &a_, const cv::DMatch &b_){
 
-    for ( int i = 0; i < des_1. rows; i++ )
-    {
-        double dist = brute_hamming_matches[i].distance;
-        if ( dist < min_dist ) min_dist = dist;
-        if ( dist > max_dist ) max_dist = dist;
-    }
+        return a_.distance < b_.distance;
 
-    //Matches good_matches;
+    });
+
+
+
+    double mn_dist_ = brute_hamming_matches[0].distance;
     
-    for ( int i = 0; i < des_1.rows; i++ )
-    {
-        if ( brute_hamming_matches[i].distance <= std::max( 2*min_dist, 20.0 ) )
-        {
-            good_matches_.push_back (brute_hamming_matches[i]);
+    std::cout << "[frames] mn_dist_: " << mn_dist_ << std::endl;
+    
+    //keeps track of already matched points
+   
+
+    for ( int i = 0; i < n_; i++ )
+    {   
+        
+        cv::DMatch m_ = brute_hamming_matches[i]; 
+        
+        double dis_ = m_.distance; 
+
+        if(dis_ > 5 * mn_dist_) {
+
+            break;
+
         }
+
+        good_matches_.push_back(m_);
+
     }
 
 }
@@ -165,15 +176,38 @@ void simple_sfm::Frame::ExtractMatchingKeyPoints(const KP &kp_a_, const KP &kp_b
 
     assert(("[frames]" , (int)kp_a_mat_.size() == 0 && (int)kp_b_mat_.size() == 0));
 
-    //std::cout << "[frames] kp_a.size(): " << (int)kp_a_.size() << " kp_b.size(): " << (int)kp_b_.size() << std::endl;
-
-    //assert(("[frames.cpp]", (int)kp_a_.size() == (int)kp_b_.size()));
+    
+    std::set<cv::KeyPoint, compare_kp> train_vis_ , query_vis_;
+    
+    int cnt_ = 0; 
 
     for (auto match : good_matches_) {
         
+        cv::DMatch m_ = match;
+
+        cv::KeyPoint t_ = kp_b_[m_.trainIdx];
+        cv::KeyPoint q_ = kp_a_[m_.queryIdx];
+
+        if(train_vis_.count(t_) || query_vis_.count(q_)) {
+            
+            continue;
+        }
+
+
+        cnt_++;
+
+        train_vis_.insert(t_);
+        query_vis_.insert(q_);
+
         kp_a_mat_.push_back(kp_a_[match.queryIdx]);
         kp_b_mat_.push_back(kp_b_[match.trainIdx]);
 
     }
-
+    
+    //std::cout << "[frames] number of matching keypoints found: " << cnt_ << std::endl; 
+    //std::cout << "[frames] train_vis_.size(): " << (int)train_vis_.size() << std::endl;
+    //std::cout << "[frames] query_vis_.size(): " << (int)query_vis_.size() << std::endl;
+    //std::cout << "[frames] kp_a_mat_.size(): " << (int)kp_a_mat_.size() << std::endl;
+    //std::cout << "[frames] kp_b_mat_.size(): " << (int)kp_b_mat_.size() << std::endl;
+    
 }
