@@ -1,24 +1,19 @@
 #ifndef BKP_H
-#define BKP_H
+#define BKP_H 
+
+//  ======================================================================
+//  =============   Bookkeeping functions       ==========================
+//  ======================================================================
 
 
-
-#include "ds.hpp"
-#include "io.hpp"
+#include "sfm_utility.hpp"
+#include "frame.hpp"
 
 #include <map>
 
 namespace simple_sfm {
 
-    struct compare {
-        bool operator() (const Point2D& a_, const Point2D& b_) const {
-            
-            return ((a_.x < b_.x) ||((a_.x == b_.x) && (a_.y < b_.y))); // if x<y then x will come before y. Change this condition as per requirement
-        
-        }
-    };
-            
-
+    
     class BookKeeping{
 
         public: 
@@ -38,13 +33,12 @@ namespace simple_sfm {
             bool hasPoint3d(const Point3D &pt_3d_) const;
 
             Point3D getPoint3d(const Point2D &pt_);
+
             
         private:
 
-                
-            
             std::vector<Point3D> global_point_cloud_;
-            std::map<Point2D, Point3D, compare> corr_2d_to_3d_;
+            std::map<Point2D, Point3D, compare_pt2d> corr_2d_to_3d_;
             
 
             //TODO ---> TUNE

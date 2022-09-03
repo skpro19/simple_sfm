@@ -45,15 +45,12 @@ void simple_sfm::SimpleSFM::runSFMPipeline(){
         frame_idx_++;
 
     }
-    
 
 }
 
 
 void simple_sfm::SimpleSFM::initializeSFMPipeline() 
 {
-
-    
     std::cout << "[sfm] InitializeSFMPipeline function!" << std::endl;
 
     bool initialized_ = false; 
@@ -78,15 +75,6 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
     F1_ = image_file_list_[curr_idx_];
 
     Frame::Points2DFromFrames(F0_, F1_, pts_last_, pts_curr_);   
-
-    std::cout << "[sfm - initializeSFMPipeline] pts_last_.size(): " << (int)pts_last_.size() << " pts_curr_.size(): " << (int)pts_curr_.size() << std::endl;
-
-    
-    for(auto t: pts_curr_) s_curr_.insert(t); 
-    for(auto t: pts_last_) s_last_.insert(t); 
-    
-    std::cout << "[sfm - initializeSFMPipeline] s_last_.size(): " << (int)s_last_.size() << " s_curr.size(): " << (int)s_curr_.size() << std::endl;
-
     
     E_ = cv::findEssentialMat(pts_curr_, pts_last_, K_, cv::RANSAC, 0.999, 1.0, E_mask_);
     
@@ -94,13 +82,10 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
 
     scale_ = Frame::GetAbsoluteScale(gt_poses_[last_idx_], gt_poses_[curr_idx_]);
 
-    //std::cout << "[sfm] scale_: " << scale_ << std::endl;
-
     curr_idx_++; 
 
     cv::Matx34d P0_, P1_;
     cv::Matx34d C0_, C1_;
-
 
     P0_ = P_prev_;
 
@@ -116,7 +101,6 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
 
     std::cout << "[sfm] H1" << std::endl;
 
-    //transform between kth and (k+1)th frame
     cv::Matx44d T_k_ = {
                             R.at<double>(0, 0),  R.at<double>(0, 1),  R.at<double>(0, 2), t.at<double>(0, 0),
                             R.at<double>(1, 0),  R.at<double>(1, 1),  R.at<double>(1, 2), t.at<double>(1, 0),
@@ -133,8 +117,6 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
     std::cout << "[sfm] H2" << std::endl;
 
 
-    //initial triangulation
-    //cv::Mat pts_4d_(4,pts_last_.size(),CV_32F);
     cv::Mat pts_4d_;
     cv::triangulatePoints(P0_, P1_, pts_last_, pts_curr_, pts_4d_);
     

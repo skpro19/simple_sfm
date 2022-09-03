@@ -1,8 +1,17 @@
 #ifndef SFM_UTIL_H
 #define SFM_UTIL_H
 
+/*
 
-#include "sfm.hpp"
+- Add scale data for initialization
+
+
+
+*/
+
+
+
+#include "ds.hpp"
 
 namespace simple_sfm{
 
@@ -15,6 +24,15 @@ namespace simple_sfm{
         
         }
     };
+
+    struct compare_pt2d {
+        bool operator() (const Point2D& a_, const Point2D& b_) const {
+            
+            return ((a_.x < b_.x) ||((a_.x == b_.x) && (a_.y < b_.y))); // if x<y then x will come before y. Change this condition as per requirement
+      
+        }
+    };
+
 
 };
 

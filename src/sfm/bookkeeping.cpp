@@ -1,10 +1,11 @@
 #include "../../include/sfm/bookkeeping.hpp"
-#include "../../include/sfm/frame.hpp"
+
 
 simple_sfm::BookKeeping::BookKeeping() {
 
     std::cout << "[bkp] Inside the BKP constructor!" << std::endl;
 
+    
     //TODO: Initialize last_frame_;
 }
 
