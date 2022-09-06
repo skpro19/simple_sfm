@@ -49,7 +49,7 @@ void simple_sfm::SimpleSFM::runSFMPipeline(){
 
 void simple_sfm::SimpleSFM::initializeSFMPipeline() 
 {
-    std::cout << "[sfm] InitializeSFMPipeline function!" << std::endl;
+    //std::cout << "[sfm] InitializeSFMPipeline function!" << std::endl;
 
     bool initialized_ = false; 
 
@@ -98,7 +98,7 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
     assert(("[sfm]" , t.size() == cv::Size(1, 3)));
     assert(("[sfm]" , R.size() == cv::Size(3, 3)));
 
-    std::cout << "[sfm] H1" << std::endl;
+    //std::cout << "[sfm] H1" << std::endl;
 
     cv::Matx44d T_k_ = {
                             R.at<double>(0, 0),  R.at<double>(0, 1),  R.at<double>(0, 2), t.at<double>(0, 0),
@@ -113,7 +113,7 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
 
     P1_ = K_ * C1_;
 
-    std::cout << "[sfm] H2" << std::endl;
+    //std::cout << "[sfm] H2" << std::endl;
 
 
     cv::Mat pts_4d_;
@@ -124,17 +124,17 @@ void simple_sfm::SimpleSFM::initializeSFMPipeline()
 
     bkp_->initializeGlobalPointCloud(pts_3d_);
     
-    std::cout << "[sfm] H3 " << std::endl;
+    //std::cout << "[sfm] H3 " << std::endl;
 
     bkp_->initialize2D3DCorrespondance(pts_curr_, pts_3d_);
-    std::cout << "[sfm] H4" << std::endl;
+    //std::cout << "[sfm] H4" << std::endl;
 
 
     P_prev_ = P1_;
     C_prev_ = C1_;
 
 
-    std::cout << "[sfm] H5" << std::endl;
+    //std::cout << "[sfm] H5" << std::endl;
 
 }
 
@@ -154,6 +154,8 @@ void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_)
     Points2D last_pts_, curr_pts_;    
     Frame::Points2DFromFrames(last_frame_, curr_frame_, last_pts_, curr_pts_);
 
+    std::cout << "[sfm] last_pts_.size(): " << (int)last_pts_.size() << " curr_pts_.size(): " << (int)curr_pts_.size() << std::endl;
+
     assert(("[sfm]" , (int)last_pts_.size() == (int)curr_pts_.size()));
 
     Points3D object_points_;
@@ -167,13 +169,22 @@ void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_)
 
     bool flag_ = cv::solvePnPRansac(object_points_, image_points_, K_,cv::Mat(), rvec_, tvec_);
 
-    assert(("[sfm]" , flag_));
+    //assert(("[sfm]" , flag_));
     
 
     cv::Mat frame_ = io_->getFrame(frame_idx_);
     
-    Vis::displayFrame(frame_);
-    Vis::drawKeyPoints(frame_, image_points_);
+    //** visualizations 
+    {
+        Vis::displayFrame(frame_);
+        Vis::drawKeyPoints(frame_, image_points_);
+
+        
+        cv::Mat gt_pose_ = io_->getGroundTruthPose(frame_idx_);
+        Vis::updateGroundPose(gt_pose_);
+    
+    }
+
 
     cv::Mat R, t(tvec_); 
     cv::Rodrigues(rvec_, R); 
@@ -189,11 +200,18 @@ void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_)
                             R.at<double>(0, 0),  R.at<double>(0, 1),  R.at<double>(0,2) , t.at<double>(0,0),
                             R.at<double>(1, 0),  R.at<double>(1, 1),  R.at<double>(1, 2), t.at<double>(1,0),
                             R.at<double>(2, 0),  R.at<double>(2, 1),  R.at<double>(2, 2), t.at<double>(2,0),
-                            0 , 0 , 0 ,1
+                            0 , 0 , 0 , 1
 
                         };
     
     C_ = C_prev_ * T_k_;
+
+    
+    std::cout << "C_: (" << C_(0, 3) << "," << C_(2, 3) << ")" << std::endl;
+
+
+
+    Vis::updatePredictedPose(C_);
 
     cv::Matx34d P0_, P1_;
     
@@ -212,6 +230,8 @@ void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_)
 
     P_prev_ = P1_; 
     C_prev_ = C_;
+
+    std::cout << std::endl;
 
 }
 

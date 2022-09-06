@@ -18,7 +18,7 @@ simple_sfm::SFM_IO::SFM_IO(const std::string &base_folder_)
 void simple_sfm::SFM_IO::LoadDataFiles()
 {
 
-    std::cout << "[io] Inside LoadDataFiles function!"  << std::endl;
+    //std::cout << "[io] Inside LoadDataFiles function!"  << std::endl;
 
     LoadProjectionMatrix(calib_file_name_);
     LoadCameraParamsMatrix();
@@ -153,6 +153,16 @@ void simple_sfm::SFM_IO::LoadGTPoses(const std::string &gt_file_name_)
 
 }
 
+
+cv::Mat simple_sfm::SFM_IO::getGroundTruthPose(const int &idx_) const 
+{
+
+    assert(("[io]" , idx_ > 0));
+
+    const cv::Mat &mat_ = cv::Mat(gt_poses_[idx_]);
+    return mat_;
+
+}
 
 cv::Mat simple_sfm::SFM_IO::getFrame(const int &idx_) const
 {

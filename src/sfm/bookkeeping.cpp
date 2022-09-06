@@ -3,7 +3,7 @@
 
 simple_sfm::BookKeeping::BookKeeping() {
 
-    std::cout << "[bkp] Inside the BKP constructor!" << std::endl;
+    //std::cout << "[bkp] Inside the BKP constructor!" << std::endl;
 
     
     //TODO: Initialize last_frame_;
@@ -11,21 +11,21 @@ simple_sfm::BookKeeping::BookKeeping() {
 
 void simple_sfm::BookKeeping::initializeGlobalPointCloud(const std::vector<Point3D> &pts_3d_) {
 
-    std::cout << "[bkp] (int)global_point_cloud.size(): " << global_point_cloud_.size() << std::endl;
+    //std::cout << "[bkp] (int)global_point_cloud.size(): " << global_point_cloud_.size() << std::endl;
 
     assert(("[bkp]" , (int)global_point_cloud_.size() == 0));
 
-    std::cout << "[bkp] ----> initiliazeGlobalPointCloud function" << std::endl;
+    //std::cout << "[bkp] ----> initiliazeGlobalPointCloud function" << std::endl;
 
     std::copy(pts_3d_.begin(), pts_3d_.end(), std::back_inserter(global_point_cloud_));
 
-    std::cout << "[sfm] global_point_cloud.size() after initialization --> " << global_point_cloud_.size() << std::endl;
+    //std::cout << "[sfm] global_point_cloud.size() after initialization --> " << global_point_cloud_.size() << std::endl;
 
 }
 
 void simple_sfm::BookKeeping::initialize2D3DCorrespondance(const std::vector<Point2D> &pts_2d_ , const std::vector<Point3D> &pts_3d_){
 
-    std::cout << "[bkp] -----> intialize2D3DCorrespondance " << std::endl;
+   // std::cout << "[bkp] -----> intialize2D3DCorrespondance " << std::endl;
 
     assert(("[bkp]" , corr_2d_to_3d_.size() == 0));
     assert(("[bkp]" , pts_2d_.size() == pts_3d_.size()));
@@ -44,7 +44,7 @@ void simple_sfm::BookKeeping::initialize2D3DCorrespondance(const std::vector<Poi
         corr_2d_to_3d_[pt_2d_] = pt_3d_;
 
     }
-    std::cout << "[bkp] pts_2d_.size(): " << (int)pts_2d_.size() << " corr_2d_to_3d_.size(): " << (int)corr_2d_to_3d_.size() << std::endl;
+    //std::cout << "[bkp] pts_2d_.size(): " << (int)pts_2d_.size() << " corr_2d_to_3d_.size(): " << (int)corr_2d_to_3d_.size() << std::endl;
     assert(("[bkp]" , pts_2d_.size() == (int)corr_2d_to_3d_.size()));
 
 }
@@ -119,7 +119,7 @@ void simple_sfm::BookKeeping::updateGlobalPointCloud(const Points2D &pts_2d_, Po
 
     int n_ = (int)pts_2d_.size(); 
 
-    std::cout << "[bkp] Before updating ----> global_point_cloud.size() " << (int)global_point_cloud_.size() << std::endl;
+   // std::cout << "[bkp] Before updating ----> global_point_cloud.size() " << (int)global_point_cloud_.size() << std::endl;
 
     Points2D pts_;
 
@@ -149,14 +149,14 @@ void simple_sfm::BookKeeping::updateGlobalPointCloud(const Points2D &pts_2d_, Po
         
     }
 
-    std::cout << "[bkp] " << cnt_ << " insertions made to global_point_cloud!" << std::endl;
+    //std::cout << "[bkp] " << cnt_ << " insertions made to global_point_cloud!" << std::endl;
 
-    std::cout << "[bkp] n_: " << n_ << std::endl;
-    std::cout << "[bkp] pts_2d_.size(): " << pts_2d_.size() << std::endl;
-    std::cout << "[bkp] corr_2d_to_3d_.size(): " << (int)corr_2d_to_3d_.size() << std::endl;
+    //std::cout << "[bkp] n_: " << n_ << std::endl;
+    //std::cout << "[bkp] pts_2d_.size(): " << pts_2d_.size() << std::endl;
+    //std::cout << "[bkp] corr_2d_to_3d_.size(): " << (int)corr_2d_to_3d_.size() << std::endl;
     
     assert(("[bkp]" , ((int)pts_2d_.size() == (int)corr_2d_to_3d_.size())));
 
-    std::cout << "[bkp] After updating ----> global_point_cloud.size() " << (int)global_point_cloud_.size() << std::endl;
+    //std::cout << "[bkp] After updating ----> global_point_cloud.size() " << (int)global_point_cloud_.size() << std::endl;
 
 }

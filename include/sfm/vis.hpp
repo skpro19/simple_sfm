@@ -25,14 +25,16 @@ namespace simple_sfm {
             static void drawKeyPoints(cv::Mat &mat_, const Points2D &kp_a_);
             static void displayFrame(const cv::Mat &frame_);
 
+
+            static void updateGroundPose(const cv::Matx34d &pose_); 
+            static void updatePredictedPose(const cv::Matx34d &pose_);
+
         private:
 
-            //static inline cv::Mat mat_= cv::Mat::zeros(800, 500, CV_8UC3);
+            static inline cv::Mat gt_mat_ = cv::Mat::zeros(1000, 1000, CV_8UC3);
+            static inline cv::Mat pred_mat_ = cv::Mat::zeros(1000, 1000, CV_8UC3);
             
-        
-
-
-
+           
     };
 
 

@@ -4,7 +4,8 @@
 /*
 
 - Add scale data for initialization
-
+- Plot predicted trajectory to see if everything's fine
+- incorporate PCL
 
 
 */

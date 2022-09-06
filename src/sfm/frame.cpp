@@ -93,7 +93,7 @@ void simple_sfm::Frame::ExtractGoodMatches(const cv::String &img_a_, const cv::S
   
     int n_ = (int)brute_hamming_matches.size();
 
-    std::cout << "[frame] brute_hamming_matches.size(): " << brute_hamming_matches.size() << std::endl;
+    //std::cout << "[frame] brute_hamming_matches.size(): " << brute_hamming_matches.size() << std::endl;
   
     std::sort(brute_hamming_matches.begin(), brute_hamming_matches.end(), [](const cv::DMatch &a_, const cv::DMatch &b_){
 
@@ -105,7 +105,7 @@ void simple_sfm::Frame::ExtractGoodMatches(const cv::String &img_a_, const cv::S
 
     double mn_dist_ = brute_hamming_matches[0].distance;
     
-    std::cout << "[frames] mn_dist_: " << mn_dist_ << std::endl;
+    //std::cout << "[frames] mn_dist_: " << mn_dist_ << std::endl;
     
     //keeps track of already matched points
    
@@ -117,7 +117,7 @@ void simple_sfm::Frame::ExtractGoodMatches(const cv::String &img_a_, const cv::S
         
         double dis_ = m_.distance; 
 
-        if(dis_ > 5 * mn_dist_) {
+        if(dis_ > multiplier_ * mn_dist_) {
 
             break;
 

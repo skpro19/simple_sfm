@@ -43,6 +43,7 @@ namespace simple_sfm{
             void getGTPoses(std::vector<cv::Matx34d> &list_)            const   {   list_ = gt_poses_; }
             
             cv::Mat getFrame(const int &idx_) const;
+            cv::Mat getGroundTruthPose(const int &idx_) const;
 
         private:
 

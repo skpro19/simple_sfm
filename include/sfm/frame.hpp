@@ -36,6 +36,9 @@ namespace simple_sfm{
 
             static inline cv::Ptr<cv::ORB>  orb_ = cv::ORB::create(5000);
 
+            //TODO ----> TUNE
+            static inline int multiplier_ = 10;
+
             //static std::set<int>  train_set_, query_set_;
 
     } ;   
