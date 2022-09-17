@@ -28,7 +28,8 @@ namespace simple_sfm{
 
             //debugging functions
             void runVOPipeline();
-
+            void run_vo_pipeline();
+            void extract_features(const cv::Mat &img_1, const cv::Mat &img_2);
 
           
         private:
@@ -37,7 +38,7 @@ namespace simple_sfm{
             std::shared_ptr<SFM_IO>                     io_;
             std::shared_ptr<BookKeeping>                bkp_;
             
-            std::vector<cv::String>                     image_file_list_;
+            std::vector<cv::String>                     frame_list_;
 
             cv::Matx33d                                 K_;
             cv::Matx34d                                 P_prev_;
@@ -46,9 +47,14 @@ namespace simple_sfm{
             cv::Matx34d                                 C_prev_;
 
 
-            cv::String                                  F0_, F1_;       //last and current frames
 
             std::vector<cv::Matx34d>                    gt_poses_;
+
+            //**debugging
+            //std::vector<cv::KeyPoint> kp_1, kp_2;
+            //std::vector<cv::KeyPoint> kp_1_matched, kp_2_matched; 
+            void match_features(const cv::Mat &img_1, const cv::Mat &img_2);
+            double getScale(int curr_idx_, int prev_idx_);
     };
 
 

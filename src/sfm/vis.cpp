@@ -11,8 +11,8 @@ simple_sfm::Vis::Vis()
 void simple_sfm::Vis::displayFrame(const cv::Mat &frame_) 
 {
 
-    cv::imshow("frame", frame_);
-    cv::waitKey(0);
+    //cv::imshow("frame", frame_);
+    //cv::waitKey(10);
 
 }
 
@@ -23,9 +23,9 @@ void simple_sfm::Vis::updateGroundPose(const cv::Matx34d &pose_)
 
     cv::Point p_(x_, y_);
 
-    cv::circle(Vis::gt_mat_, p_ ,1, cv::viz::Color::celestial_blue(), 2);
-    cv::imshow("gt_", Vis::gt_mat_);
-    cv::waitKey(0);
+    //cv::circle(Vis::gt_mat_, p_ ,1, cv::viz::Color::celestial_blue(), 2);
+    //cv::imshow("gt_", Vis::gt_mat_);
+   // cv::waitKey(10);
     
 } 
 
@@ -36,9 +36,9 @@ void simple_sfm::Vis::updatePredictedPose(const cv::Matx34d &pose_)
 
     cv::Point p_(x_, y_);
 
-    cv::circle(Vis::pred_mat_, p_ ,1, cv::viz::Color::green(), 2);
-    cv::imshow("pred_", Vis::pred_mat_);
-    cv::waitKey(0);
+   // cv::circle(Vis::pred_mat_, p_ ,1, cv::viz::Color::green(), 2);
+    //cv::imshow("pred_", Vis::pred_mat_);
+    //cv::waitKey(10);
 
 } 
 
@@ -61,8 +61,8 @@ void simple_sfm::Vis::drawKeyPoints(cv::Mat &mat_, const Points2D &kp_a_, const 
         
     }
     
-    cv::imshow("Features", mat_);
-    cv::waitKey(0);
+    //cv::imshow("Features", mat_);
+    //::waitKey(10);
 
 }
 
@@ -84,7 +84,7 @@ void simple_sfm::Vis::drawKeyPoints(cv::Mat &mat_, const Points2D &kp_a_)
         
     }
     
-    cv::imshow("Features", mat_);
-    cv::waitKey(0);
+    //::imshow("Features", mat_);
+    //::waitKey(10);
 
 }

@@ -16,7 +16,7 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 void simple_sfm::SimpleSFM::updateIOParams() 
 {
 
-    io_->getImageFileNames(image_file_list_);
+    io_->getImageFileNames(frame_list_);
     io_->getGTPoses(gt_poses_);
     
     P_prev_ = io_->getP0();
@@ -29,210 +29,244 @@ void simple_sfm::SimpleSFM::updateIOParams()
 
 }
 
-void simple_sfm::SimpleSFM::runSFMPipeline(){
 
-    initializeSFMPipeline();
 
-    int num_frames_ = (int)image_file_list_.size() ; 
+/*void simple_sfm::SimpleSFM::extract_features(const cv::Mat &img_1, const cv::Mat &img_2){
 
-    int frame_idx_ = 2; 
+    cv::Mat image_one, image_two;
 
-    while(frame_idx_ < num_frames_) {
+    cv::cvtColor(img_1, image_one, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(img_2, image_two, cv::COLOR_BGR2GRAY);
 
-        addNextFrame(frame_idx_); 
-        frame_idx_++;
+    std::vector< cv::Point2f > corners_one, corners_two;
+    
+    int maxCorners = 2000;
 
-    }
+    double qualityLevel = 0.01;
+
+    double minDistance = 1.0;
+
+    cv::Mat mask = cv::Mat();
+    
+    int blockSize = 1;
+
+    bool useHarrisDetector = false;
+
+    double k = 0.04;
+
+    
+    //*** keypoints extraction
+    cv::goodFeaturesToTrack( image_one, corners_one, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k );
+
+    cv::goodFeaturesToTrack( image_two, corners_two, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k );
+
+    //std::cout << "corners_one.size(): " << (int)corners_one.size() << std::endl;
+    //std::cout << "corners_two.size(): " << (int)corners_two.size() << std::endl;
+    
+
+    cv::KeyPoint::convert(kp_1, corners_one, std::vector<int>());
+    cv::KeyPoint::convert(kp_2, corners_two, std::vector<int>());
+
+    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
+    //std::cout << "kp_2.size(): " << (int)kp_2.size() << std::endl;
+    
 
 }
 
-
-void simple_sfm::SimpleSFM::initializeSFMPipeline() 
-{
-    //std::cout << "[sfm] InitializeSFMPipeline function!" << std::endl;
-
-    bool initialized_ = false; 
-
-    cv::Mat E_, E_mask_;
-    cv:: Mat R, t;
+void simple_sfm::SimpleSFM::match_features(const cv::Mat &img_1, const cv::Mat &img_2){
     
-    Points2D pts_curr_, pts_last_;
+    kp_1_matched.clear(); 
+    kp_2_matched.clear();
+
+    cv::Mat image_one, image_two;
+    cv::cvtColor(img_1, image_one, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(img_2, image_two, cv::COLOR_BGR2GRAY);
+    
+    cv::Mat mask = cv::Mat();
+    cv::Mat des_1, des_2;
+    
+    cv::Ptr<cv::ORB>orb_ = cv::ORB::create(5000);
+
+
+    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
+    
+    //*** extracting descriptors from keypoints
+    orb_->detectAndCompute(image_one, mask, kp_1, des_1);
+    orb_->detectAndCompute(image_two, mask, kp_2, des_2);
+    
+    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
+        
+    des_1.convertTo(des_1, 0);
+    des_2.convertTo(des_2, 0);
+    
+    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
+
+    std::vector<cv::DMatch> brute_hamming_matches;
+    matcher->match(des_1, des_2, brute_hamming_matches);
+
+    double min_dist=10000, max_dist=0;
+
+    for ( int i = 0; i < des_1. rows; i++ )
+    {
+        double dist = brute_hamming_matches[i].distance;
+        if ( dist < min_dist ) min_dist = dist;
+        if ( dist > max_dist ) max_dist = dist;
+    }
+
+    std::vector<cv::DMatch> good_matches;
+    
+    for ( int i = 0; i < des_1.rows; i++ )
+    {
+        if ( brute_hamming_matches[i].distance <= std::max( 2*min_dist, 20.0 ) )
+        {
+            good_matches.push_back (brute_hamming_matches[i]);
+        }
+    }
+
+    for (auto match : good_matches) {
+        
+        kp_1_matched.push_back(kp_1[match.queryIdx]);
+        kp_2_matched.push_back(kp_2[match.trainIdx]);
+
+    }
+    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
+    //std::cout << "kp_1_matched.size(): " << (int)kp_1_matched.size() << std::endl;
+        
+}
+
+double simple_sfm::SimpleSFM::getScale(int curr_idx_, int prev_idx_) {
+
+    cv::Mat prev_poses_ = cv::Mat(gt_poses_[prev_idx_]);
+    cv::Mat curr_poses_ = cv::Mat(gt_poses_[curr_idx_]); 
+
+    cv::Point3d prev_point_ = {prev_poses_.at<double>(0,3), prev_poses_.at<double>(1,3), prev_poses_.at<double>(2,3)};
+    cv::Point3d curr_point_ = {curr_poses_.at<double>(0,3), curr_poses_.at<double>(1,3), curr_poses_.at<double>(2,3)};
+    cv::Point3d diff_ = (curr_point_ - prev_point_);
+
+    double scale_ = cv::norm(diff_);
+    
+    return scale_;
+
+}*/
+
+void simple_sfm::SimpleSFM::run_vo_pipeline(){
+
+    cv::Mat E_, R, t;
+    cv::Mat R_f, t_f;
+
+    cv::Mat C_k_, C_k_minus_1_;
+    cv::Mat T_k_;
+
+    R_f.convertTo(R_f, CV_64F);
+    t_f.convertTo(t_f, CV_64F);
+
+    R.convertTo(R, CV_64F);
+    t.convertTo(t, CV_64F);    
+
+    C_k_.convertTo(C_k_, CV_64F);
+    C_k_minus_1_.convertTo(C_k_minus_1_, CV_64F);
+    
+    cv::Mat NO_ROT_ = cv::Mat::eye(3, 3, CV_64F);
+    cv::Mat NO_T_ = cv::Mat::zeros(3, 1, CV_64F);
+    
+    cv::Mat TEMP_ = (cv::Mat_<double>(1, 4) << 0, 0, 0, 1); 
+    TEMP_.convertTo(TEMP_, CV_64F);
+    
+    
+    //** Initializing C_k_minus_1 with 0 translation and 0 rotation w.r.t. the 'some' initial co-ordinate frame
+    cv::hconcat(NO_ROT_, NO_T_, C_k_minus_1_);
+    cv::vconcat(C_k_minus_1_, TEMP_, C_k_minus_1_);
 
     int last_idx_ = 0 ;
-    int curr_idx_ = 1;
-    int inlier_cnt_ = 0 ;
 
-    double scale_; 
+    int sz_ = frame_list_.size(); 
+
+    for(int i = 1 ; i < sz_; i++) {
+
+        //std::cout 
+    
+        Frame::kp_1.resize(0); 
+        Frame::kp_2.resize(0); 
+
+        Frame::kp_1_matched.resize(0); 
+        Frame::kp_2_matched.resize(0);
+    
+        cv::Mat img_1 = cv::imread(frame_list_[last_idx_].c_str());
+        cv::Mat img_2 = cv::imread(frame_list_[i].c_str());
+
+        //match_features(img_1, img_2);
+        Frame::extractAndMatchFeatures(img_1, img_2);
         
-    std::cout << "[sfm] curr_idx_: " << curr_idx_ << std::endl;
+        assert((int)Frame::kp_1_matched.size() == (int)Frame::kp_2_matched.size());
 
-    pts_curr_.resize(0);
-    pts_last_.resize(0);
+        std::vector<cv::Point2f> kp_1f, kp_2f; //array of keypoint co-ordinates
 
-    F0_ = image_file_list_[last_idx_];
-    F1_ = image_file_list_[curr_idx_];
+        std::cout << "i: " << i << " kp_1_matched.size(): " << (int)Frame::kp_1_matched.size() << std::endl;
 
-    Frame::Points2DFromFrames(F0_, F1_, pts_last_, pts_curr_);   
+        for(int k = 0; k < (int)Frame::kp_1_matched.size(); k++) {
 
-    
-    E_ = cv::findEssentialMat(pts_curr_, pts_last_, K_, cv::RANSAC, 0.999, 1.0, E_mask_);
-    
-    inlier_cnt_ = cv::recoverPose(E_, pts_curr_, pts_last_, K_, R, t, E_mask_);
-
-    scale_ = Frame::GetAbsoluteScale(gt_poses_[last_idx_], gt_poses_[curr_idx_]);
-
-    curr_idx_++; 
-
-    cv::Matx34d P0_, P1_;
-    cv::Matx34d C0_, C1_;
-
-    P0_ = P_prev_;
-
-    C0_ =  {    
-                R_prev_(0, 0),  R_prev_(0, 1),  R_prev_(0,2) , t_prev_(0,0),
-                R_prev_(1, 0),  R_prev_(1, 1),  R_prev_(1, 2), t_prev_(1,0),
-                R_prev_(2, 0),  R_prev_(2, 1),  R_prev_(2, 2), t_prev_(2,0)
+            cv::Point2f p1_ = Frame::kp_1_matched[k].pt, p2_ = Frame::kp_2_matched[k].pt;
             
-            };
+            kp_1f.push_back(p1_); 
+            kp_2f.push_back(p2_);
 
-    assert(("[sfm]" , t.size() == cv::Size(1, 3)));
-    assert(("[sfm]" , R.size() == cv::Size(3, 3)));
+            cv::circle( img_1, p1_, 2, cv::viz::Color::yellow(), -1 );
+            cv::line(img_1, p1_, p2_, cv::viz::Color::pink());
+            cv::circle( img_1, p2_, 2, cv::viz::Color::orange_red(), -1 );
+        }
+        
+        
+        cv::Mat E_mask_;
+        E_mask_.convertTo(E_mask_, CV_64F);
 
-    //std::cout << "[sfm] H1" << std::endl;
+        E_ = cv::findEssentialMat(kp_2f, kp_1f, K_,cv::RANSAC, 0.999, 1.0, E_mask_);
 
-    cv::Matx44d T_k_ = {
-                            R.at<double>(0, 0),  R.at<double>(0, 1),  R.at<double>(0, 2), t.at<double>(0, 0),
-                            R.at<double>(1, 0),  R.at<double>(1, 1),  R.at<double>(1, 2), t.at<double>(1, 0),
-                            R.at<double>(2, 0),  R.at<double>(2, 1),  R.at<double>(2, 2), t.at<double>(2, 0),
-                            0 , 0 , 0 ,1
-
-                        };
-    
-
-    C1_ = C0_ * T_k_;
-
-    P1_ = K_ * C1_;
-
-    //std::cout << "[sfm] H2" << std::endl;
-
-
-    cv::Mat pts_4d_;
-    cv::triangulatePoints(P0_, P1_, pts_last_, pts_curr_, pts_4d_);
-    
-    std::vector<Point3D> pts_3d_;
-    convertPointsFromHomogeneous(pts_4d_, pts_3d_);
-
-    bkp_->initializeGlobalPointCloud(pts_3d_);
-    
-    //std::cout << "[sfm] H3 " << std::endl;
-
-    bkp_->initialize2D3DCorrespondance(pts_curr_, pts_3d_);
-    //std::cout << "[sfm] H4" << std::endl;
-
-
-    P_prev_ = P1_;
-    C_prev_ = C1_;
-
-
-    //std::cout << "[sfm] H5" << std::endl;
-
-}
+        int inlier_cnt_ =0 ; 
 
 
 
-void simple_sfm::SimpleSFM::addNextFrame(int frame_idx_) 
-{
-    
-    std::cout << "[sfm] ---> addNextFrame ---> frame_idx_: " << frame_idx_ << std::endl;
-    assert(("[sfm]" , frame_idx_ > 0));
+        cv::imshow("Road facing camera", img_1);
 
-    int last_idx_ = frame_idx_ - 1; 
+        inlier_cnt_ = cv::recoverPose(E_, kp_2f, kp_1f, K_, R, t, E_mask_);
 
-    cv::String last_frame_ = image_file_list_[last_idx_]; 
-    cv::String curr_frame_ = image_file_list_[frame_idx_];
+        std::cout << "inlier_cnt_: " << inlier_cnt_ << std::endl;
 
-    Points2D last_pts_, curr_pts_;    
-    Frame::Points2DFromFrames(last_frame_, curr_frame_, last_pts_, curr_pts_);
+        double scale_;
 
-    std::cout << "[sfm] last_pts_.size(): " << (int)last_pts_.size() << " curr_pts_.size(): " << (int)curr_pts_.size() << std::endl;
+        double del_z_ = std::fabs(t.at<double>(2,0)); 
+        double del_y_ = std::fabs(t.at<double>(1,0));
+        double del_x_ = std::fabs(t.at<double>(0,0));
+        
+        
+        if(inlier_cnt_ < 25) {continue;}
 
-    assert(("[sfm]" , (int)last_pts_.size() == (int)curr_pts_.size()));
+        scale_ = Frame::getScale(cv::Mat(gt_poses_[i]), cv::Mat(gt_poses_[last_idx_])); 
 
-    Points3D object_points_;
-    Points2D image_points_;
+        bool flag_ = ((scale_ > 0.1) &&  (del_z_ > del_x_) && (del_z_ > del_y_))  ; 
+        
+        std::cout << std::endl;
 
-    bkp_->addNextFrame(last_pts_, curr_pts_, image_points_, object_points_);
+        if(!flag_) {continue; ;}
 
-    assert(("[sfm]" , (int)image_points_.size() == (int)object_points_.size()));
-
-    cv::Mat rvec_, tvec_; 
-
-    bool flag_ = cv::solvePnPRansac(object_points_, image_points_, K_,cv::Mat(), rvec_, tvec_);
-
-    //assert(("[sfm]" , flag_));
-    
-
-    cv::Mat frame_ = io_->getFrame(frame_idx_);
-    
-    //** visualizations 
-    {
-        Vis::displayFrame(frame_);
-        Vis::drawKeyPoints(frame_, image_points_);
+        last_idx_ = i;
 
         
-        cv::Mat gt_pose_ = io_->getGroundTruthPose(frame_idx_);
-        Vis::updateGroundPose(gt_pose_);
-    
+        cv::Mat temp_ = (cv::Mat_<double>(1, 4) << 0, 0, 0, 1); 
+        temp_.convertTo(temp_, CV_64F);
+
+        T_k_.convertTo(T_k_, CV_64F);
+
+        cv::hconcat(R, t, T_k_);
+        cv::vconcat(T_k_, temp_, T_k_);
+
+        
+        C_k_ =  C_k_minus_1_ * T_k_;
+        C_k_minus_1_ = C_k_;
+
+        std::cout <<  i << "--->[x y z]: " << "(" <<C_k_.at<double>(0, 3) << "," << C_k_.at<double>(1, 3) << "," << C_k_.at<double>(2,3) << ")" << std::endl; 
+        //draw_trajectory_windows(C_k_, i);
+        
+        cv::waitKey(10);
     }
-
-
-    cv::Mat R, t(tvec_); 
-    cv::Rodrigues(rvec_, R); 
-   
-    assert(("[sfm]" , R.size() == cv::Size(3, 3)));
-    assert(("[sfm]" , t.size() == cv::Size(1, 3)));
-    
-
-    cv::Matx34d C_;
-
-    //computes the transform between C_prev_ and C_;
-    cv::Matx44d T_k_ = {
-                            R.at<double>(0, 0),  R.at<double>(0, 1),  R.at<double>(0,2) , t.at<double>(0,0),
-                            R.at<double>(1, 0),  R.at<double>(1, 1),  R.at<double>(1, 2), t.at<double>(1,0),
-                            R.at<double>(2, 0),  R.at<double>(2, 1),  R.at<double>(2, 2), t.at<double>(2,0),
-                            0 , 0 , 0 , 1
-
-                        };
-    
-    C_ = C_prev_ * T_k_;
-
-    
-    std::cout << "C_: (" << C_(0, 3) << "," << C_(2, 3) << ")" << std::endl;
-
-
-
-    Vis::updatePredictedPose(C_);
-
-    cv::Matx34d P0_, P1_;
-    
-    P0_ = P_prev_;
-
-    P1_ = K_ * C_ ;
-
-    cv::Mat pts_4d_;
-    cv::triangulatePoints(P0_, P1_, last_pts_, curr_pts_, pts_4d_);  
-
-    
-    std::vector<Point3D> pts_3d_; 
-    convertPointsFromHomogeneous(pts_4d_, pts_3d_);
-    
-    bkp_->updateGlobalPointCloud(curr_pts_, pts_3d_);
-
-    P_prev_ = P1_; 
-    C_prev_ = C_;
-
-    std::cout << std::endl;
-
 }
-
 
