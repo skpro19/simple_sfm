@@ -25,7 +25,6 @@ void simple_sfm::Vis::updateGroundPose(const cv::Matx34d &pose_)
 
     cv::circle(Vis::gt_mat_, p_ ,1, cv::viz::Color::celestial_blue(), 2);
     cv::imshow("gt_", Vis::gt_mat_);
-    cv::waitKey(10);
     
 } 
 

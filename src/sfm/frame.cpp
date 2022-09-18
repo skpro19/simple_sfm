@@ -71,12 +71,37 @@ void simple_sfm::Frame::extractAndMatchFeatures(const cv::Mat &img_1, const cv::
         }
     }
 
-    for (auto match : good_matches) {
-        
-        kp_1_matched.push_back(kp_1[match.queryIdx]);
-        kp_2_matched.push_back(kp_2[match.trainIdx]);
+    //pruning good matches for duplicate kps
+    sort(good_matches.begin(), good_matches.end(), [](const cv::DMatch &a_, const cv::DMatch &b_){
 
+        return a_.distance < b_.distance;
+
+    });
+
+    int n_ = (int)good_matches.size(); 
+
+    std::set<std::pair<float, float> > sa_, sb_; 
+    
+    for(int i = 0 ; i < n_ ; i++){
+
+        cv::DMatch match = good_matches[i]; 
+        
+        std::pair<float, float> pa_, pb_; 
+        
+        int qi_ = match.queryIdx, ti_ = match.trainIdx;
+
+        pa_ = {kp_1[qi_].pt.x, kp_1[qi_].pt.y},  pb_ = {kp_2[ti_].pt.x, kp_2[ti_].pt.y}; 
+        
+        if(sa_.count(pa_) > 0 || sb_.count(pb_) > 0) {continue;}
+
+        sa_.insert(pa_);
+        sb_.insert(pb_);
+    
+        kp_1_matched.push_back(kp_1[qi_]);
+        kp_2_matched.push_back(kp_2[ti_]);
+        
     }
+
     //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
     //std::cout << "kp_1_matched.size(): " << (int)kp_1_matched.size() << std::endl;
         

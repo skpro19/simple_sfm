@@ -29,6 +29,48 @@ void simple_sfm::SimpleSFM::updateIOParams()
 
 }
 
+void processMask(const cv::Mat &mask_, const int &inlier_cnt_){
+
+    std::cout << "mask_.size(): " << mask_.size() << std::endl;
+
+    std::vector<float> v_(mask_);
+
+    std::cout << "v_.size(): " << (int)v_.size() << std::endl;
+
+    int sum_ = std::accumulate(v_.begin(), v_.end(), 0);
+
+    std::cout << "inlier_cnt_: " << inlier_cnt_ << " sum_: " << sum_ << std::endl;
+
+}
+
+
+void checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_){
+
+    std::set<std::pair<float, float> > sa_, sb_; 
+
+    assert((int)a_.size() == (int)b_.size());
+    
+    int n_ = (int)a_.size() ;
+
+    for(int i = 0 ;i < n_;  i++) {
+
+        std::pair<float, float> pa_, pb_; 
+        
+        //pa_ = {a_[i].pt.x, a_[i].pt.y},  pb_ = {b_[i].pt.x, b_[i].pt.y}; 
+        pa_ = {a_[i].x, a_[i].y},  pb_ = {b_[i].x, b_[i].y}; 
+        
+        //if(sa_.count(pa_) > 0 || sb_.count(pb_) > 0) {continue;}
+
+        sa_.insert(pa_);
+        sb_.insert(pb_);
+    
+    }
+
+    std::cout << "a_.size(): " << a_.size() << " sa_.size(): " << (int)sa_.size() << std::endl;
+    std::cout << "b_.size(): " << b_.size() << " sb_.size(): " << (int)sb_.size() << std::endl;
+
+}
+
 void simple_sfm::SimpleSFM::runVOPipeline(){
 
     cv::Mat E_, R, t;
@@ -61,7 +103,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
     int sz_ = frame_list_.size(); 
 
-    for(int i = 1 ; i < sz_; i++) {
+    for(int i = 1 ; i < 200; i++) {
 
         //std::cout 
     
@@ -103,8 +145,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         int inlier_cnt_ =0 ; 
 
-
-
+        //std::cout << "E_mask_.size(): " << E_mask_.size() << std::endl;
         //cv::imshow("Road facing camera", img_1);
 
         inlier_cnt_ = cv::recoverPose(E_, kp_2f, kp_1f, K_, R, t, E_mask_);
@@ -120,6 +161,8 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         
         if(inlier_cnt_ < 25) {continue;}
 
+        checkForDuplicates(kp_1f, kp_2f);
+
         scale_ = Frame::getScale(cv::Mat(gt_poses_[i]), cv::Mat(gt_poses_[last_idx_])); 
 
         bool flag_ = ((scale_ > 0.1) &&  (del_z_ > del_x_) && (del_z_ > del_y_))  ; 
@@ -128,9 +171,18 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         if(!flag_) {continue; ;}
 
+
+        //processMask(E_mask_, inlier_cnt_);
+        
+
+
+
+
+
+
+
         last_idx_ = i;
 
-        
         cv::Mat temp_ = (cv::Mat_<double>(1, 4) << 0, 0, 0, 1); 
         temp_.convertTo(temp_, CV_64F);
 
@@ -144,7 +196,6 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         C_k_minus_1_ = C_k_;
 
         std::cout <<  i << "--->[x y z]: " << "(" <<C_k_.at<double>(0, 3) << "," << C_k_.at<double>(1, 3) << "," << C_k_.at<double>(2,3) << ")" << std::endl; 
-        //draw_trajectory_windows(C_k_, i);
         
         cv::imshow("img_1" , img_1);
         Vis::drawKeyPoints(img_1, kp_1f, kp_2f);
@@ -153,6 +204,10 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         Vis::updatePredictedPose(C_k_);
 
         cv::waitKey(10);
+    
+    
+    
+    
     }
 }
 
