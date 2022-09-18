@@ -44,32 +44,6 @@ void processMask(const cv::Mat &mask_, const int &inlier_cnt_){
 }
 
 
-void checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_){
-
-    std::set<std::pair<float, float> > sa_, sb_; 
-
-    assert((int)a_.size() == (int)b_.size());
-    
-    int n_ = (int)a_.size() ;
-
-    for(int i = 0 ;i < n_;  i++) {
-
-        std::pair<float, float> pa_, pb_; 
-        
-        //pa_ = {a_[i].pt.x, a_[i].pt.y},  pb_ = {b_[i].pt.x, b_[i].pt.y}; 
-        pa_ = {a_[i].x, a_[i].y},  pb_ = {b_[i].x, b_[i].y}; 
-        
-        //if(sa_.count(pa_) > 0 || sb_.count(pb_) > 0) {continue;}
-
-        sa_.insert(pa_);
-        sb_.insert(pb_);
-    
-    }
-
-    std::cout << "a_.size(): " << a_.size() << " sa_.size(): " << (int)sa_.size() << std::endl;
-    std::cout << "b_.size(): " << b_.size() << " sb_.size(): " << (int)sb_.size() << std::endl;
-
-}
 
 void simple_sfm::SimpleSFM::runVOPipeline(){
 
@@ -118,7 +92,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         //match_features(img_1, img_2);
         Frame::extractAndMatchFeatures(img_1, img_2);
-        
+
         assert((int)Frame::kp_1_matched.size() == (int)Frame::kp_2_matched.size());
 
         std::vector<cv::Point2f> kp_1f, kp_2f; //array of keypoint co-ordinates
@@ -137,16 +111,20 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
             cv::circle( img_1, p2_, 2, cv::viz::Color::orange_red(), -1 );
         }
         
+        //======== check for duplicate kps ==============
+
+        bool dup_kp_flag_ = checkForDuplicates(kp_1f, kp_2f);
         
+        if(!dup_kp_flag_) {continue;}
+
+        //===============================================
+
         cv::Mat E_mask_;
         E_mask_.convertTo(E_mask_, CV_64F);
 
         E_ = cv::findEssentialMat(kp_2f, kp_1f, K_,cv::RANSAC, 0.999, 1.0, E_mask_);
 
         int inlier_cnt_ =0 ; 
-
-        //std::cout << "E_mask_.size(): " << E_mask_.size() << std::endl;
-        //cv::imshow("Road facing camera", img_1);
 
         inlier_cnt_ = cv::recoverPose(E_, kp_2f, kp_1f, K_, R, t, E_mask_);
 
@@ -161,7 +139,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         
         if(inlier_cnt_ < 25) {continue;}
 
-        checkForDuplicates(kp_1f, kp_2f);
+        bool duplicate_flag_ = checkForDuplicates(kp_1f, kp_2f);
 
         scale_ = Frame::getScale(cv::Mat(gt_poses_[i]), cv::Mat(gt_poses_[last_idx_])); 
 
@@ -170,16 +148,6 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         std::cout << std::endl;
 
         if(!flag_) {continue; ;}
-
-
-        //processMask(E_mask_, inlier_cnt_);
-        
-
-
-
-
-
-
 
         last_idx_ = i;
 

@@ -27,6 +27,9 @@ namespace simple_sfm{
 
 
             void runVOPipeline();
+
+            bool checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_);
+
             
           
         private:
