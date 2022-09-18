@@ -23,11 +23,25 @@ void simple_sfm::Vis::updateGroundPose(const cv::Matx34d &pose_)
 
     cv::Point p_(x_, y_);
 
-    //cv::circle(Vis::gt_mat_, p_ ,1, cv::viz::Color::celestial_blue(), 2);
-    //cv::imshow("gt_", Vis::gt_mat_);
-   // cv::waitKey(10);
+    cv::circle(Vis::gt_mat_, p_ ,1, cv::viz::Color::celestial_blue(), 2);
+    cv::imshow("gt_", Vis::gt_mat_);
+    cv::waitKey(10);
     
 } 
+
+void simple_sfm::Vis::updatePredictedPose(const cv::Mat &pose_)
+{
+
+    double x_ = pose_.at<double>(0, 3) + 200 , y_ = pose_.at<double>(2, 3) + 100;
+
+    cv::Point p_(x_, y_);
+
+    cv::circle(Vis::pred_mat_, p_ ,1, cv::viz::Color::green(), 2);
+    cv::imshow("pred_", Vis::pred_mat_);
+    //cv::waitKey(10);
+
+} 
+
 
 void simple_sfm::Vis::updatePredictedPose(const cv::Matx34d &pose_)
 {
@@ -36,8 +50,8 @@ void simple_sfm::Vis::updatePredictedPose(const cv::Matx34d &pose_)
 
     cv::Point p_(x_, y_);
 
-   // cv::circle(Vis::pred_mat_, p_ ,1, cv::viz::Color::green(), 2);
-    //cv::imshow("pred_", Vis::pred_mat_);
+    cv::circle(Vis::pred_mat_, p_ ,1, cv::viz::Color::green(), 2);
+    cv::imshow("pred_", Vis::pred_mat_);
     //cv::waitKey(10);
 
 } 

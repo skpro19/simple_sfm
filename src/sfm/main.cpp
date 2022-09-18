@@ -9,7 +9,7 @@ int main(){
     
     simple_sfm::SimpleSFM sfm_(base_folder_);   
     
-    sfm_.run_vo_pipeline();
+    sfm_.runVOPipeline();
     
     
 }

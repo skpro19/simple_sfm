@@ -29,127 +29,7 @@ void simple_sfm::SimpleSFM::updateIOParams()
 
 }
 
-
-
-/*void simple_sfm::SimpleSFM::extract_features(const cv::Mat &img_1, const cv::Mat &img_2){
-
-    cv::Mat image_one, image_two;
-
-    cv::cvtColor(img_1, image_one, cv::COLOR_BGR2GRAY);
-    cv::cvtColor(img_2, image_two, cv::COLOR_BGR2GRAY);
-
-    std::vector< cv::Point2f > corners_one, corners_two;
-    
-    int maxCorners = 2000;
-
-    double qualityLevel = 0.01;
-
-    double minDistance = 1.0;
-
-    cv::Mat mask = cv::Mat();
-    
-    int blockSize = 1;
-
-    bool useHarrisDetector = false;
-
-    double k = 0.04;
-
-    
-    //*** keypoints extraction
-    cv::goodFeaturesToTrack( image_one, corners_one, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k );
-
-    cv::goodFeaturesToTrack( image_two, corners_two, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k );
-
-    //std::cout << "corners_one.size(): " << (int)corners_one.size() << std::endl;
-    //std::cout << "corners_two.size(): " << (int)corners_two.size() << std::endl;
-    
-
-    cv::KeyPoint::convert(kp_1, corners_one, std::vector<int>());
-    cv::KeyPoint::convert(kp_2, corners_two, std::vector<int>());
-
-    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
-    //std::cout << "kp_2.size(): " << (int)kp_2.size() << std::endl;
-    
-
-}
-
-void simple_sfm::SimpleSFM::match_features(const cv::Mat &img_1, const cv::Mat &img_2){
-    
-    kp_1_matched.clear(); 
-    kp_2_matched.clear();
-
-    cv::Mat image_one, image_two;
-    cv::cvtColor(img_1, image_one, cv::COLOR_BGR2GRAY);
-    cv::cvtColor(img_2, image_two, cv::COLOR_BGR2GRAY);
-    
-    cv::Mat mask = cv::Mat();
-    cv::Mat des_1, des_2;
-    
-    cv::Ptr<cv::ORB>orb_ = cv::ORB::create(5000);
-
-
-    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
-    
-    //*** extracting descriptors from keypoints
-    orb_->detectAndCompute(image_one, mask, kp_1, des_1);
-    orb_->detectAndCompute(image_two, mask, kp_2, des_2);
-    
-    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
-        
-    des_1.convertTo(des_1, 0);
-    des_2.convertTo(des_2, 0);
-    
-    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
-
-    std::vector<cv::DMatch> brute_hamming_matches;
-    matcher->match(des_1, des_2, brute_hamming_matches);
-
-    double min_dist=10000, max_dist=0;
-
-    for ( int i = 0; i < des_1. rows; i++ )
-    {
-        double dist = brute_hamming_matches[i].distance;
-        if ( dist < min_dist ) min_dist = dist;
-        if ( dist > max_dist ) max_dist = dist;
-    }
-
-    std::vector<cv::DMatch> good_matches;
-    
-    for ( int i = 0; i < des_1.rows; i++ )
-    {
-        if ( brute_hamming_matches[i].distance <= std::max( 2*min_dist, 20.0 ) )
-        {
-            good_matches.push_back (brute_hamming_matches[i]);
-        }
-    }
-
-    for (auto match : good_matches) {
-        
-        kp_1_matched.push_back(kp_1[match.queryIdx]);
-        kp_2_matched.push_back(kp_2[match.trainIdx]);
-
-    }
-    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
-    //std::cout << "kp_1_matched.size(): " << (int)kp_1_matched.size() << std::endl;
-        
-}
-
-double simple_sfm::SimpleSFM::getScale(int curr_idx_, int prev_idx_) {
-
-    cv::Mat prev_poses_ = cv::Mat(gt_poses_[prev_idx_]);
-    cv::Mat curr_poses_ = cv::Mat(gt_poses_[curr_idx_]); 
-
-    cv::Point3d prev_point_ = {prev_poses_.at<double>(0,3), prev_poses_.at<double>(1,3), prev_poses_.at<double>(2,3)};
-    cv::Point3d curr_point_ = {curr_poses_.at<double>(0,3), curr_poses_.at<double>(1,3), curr_poses_.at<double>(2,3)};
-    cv::Point3d diff_ = (curr_point_ - prev_point_);
-
-    double scale_ = cv::norm(diff_);
-    
-    return scale_;
-
-}*/
-
-void simple_sfm::SimpleSFM::run_vo_pipeline(){
+void simple_sfm::SimpleSFM::runVOPipeline(){
 
     cv::Mat E_, R, t;
     cv::Mat R_f, t_f;
@@ -225,7 +105,7 @@ void simple_sfm::SimpleSFM::run_vo_pipeline(){
 
 
 
-        cv::imshow("Road facing camera", img_1);
+        //cv::imshow("Road facing camera", img_1);
 
         inlier_cnt_ = cv::recoverPose(E_, kp_2f, kp_1f, K_, R, t, E_mask_);
 
@@ -266,6 +146,12 @@ void simple_sfm::SimpleSFM::run_vo_pipeline(){
         std::cout <<  i << "--->[x y z]: " << "(" <<C_k_.at<double>(0, 3) << "," << C_k_.at<double>(1, 3) << "," << C_k_.at<double>(2,3) << ")" << std::endl; 
         //draw_trajectory_windows(C_k_, i);
         
+        cv::imshow("img_1" , img_1);
+        Vis::drawKeyPoints(img_1, kp_1f, kp_2f);
+
+        Vis::updateGroundPose(cv::Mat(gt_poses_[i]));
+        Vis::updatePredictedPose(C_k_);
+
         cv::waitKey(10);
     }
 }

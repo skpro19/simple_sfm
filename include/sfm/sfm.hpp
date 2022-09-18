@@ -26,11 +26,8 @@ namespace simple_sfm{
             void addNextFrame(int frame_idx_);
 
 
-            //debugging functions
             void runVOPipeline();
-            void run_vo_pipeline();
-            void extract_features(const cv::Mat &img_1, const cv::Mat &img_2);
-
+            
           
         private:
 
