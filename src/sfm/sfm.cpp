@@ -7,7 +7,7 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 {
 
     io_     =   std::make_shared<SFM_IO>(base_folder_);
-    bkp_    =   std::make_shared<BookKeeping>();
+    //bkp_    =   std::make_shared<BookKeeping>();
   
     updateIOParams();
     
@@ -28,22 +28,6 @@ void simple_sfm::SimpleSFM::updateIOParams()
     R_prev_ = io_->getR0();
 
 }
-
-void processMask(const cv::Mat &mask_, const int &inlier_cnt_){
-
-    std::cout << "mask_.size(): " << mask_.size() << std::endl;
-
-    std::vector<float> v_(mask_);
-
-    std::cout << "v_.size(): " << (int)v_.size() << std::endl;
-
-    int sum_ = std::accumulate(v_.begin(), v_.end(), 0);
-
-    std::cout << "inlier_cnt_: " << inlier_cnt_ << " sum_: " << sum_ << std::endl;
-
-}
-
-
 
 void simple_sfm::SimpleSFM::runVOPipeline(){
 
@@ -148,8 +132,8 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         std::cout << std::endl;
 
         if(!flag_) {continue; ;}
+        
 
-        last_idx_ = i;
 
         cv::Mat temp_ = (cv::Mat_<double>(1, 4) << 0, 0, 0, 1); 
         temp_.convertTo(temp_, CV_64F);
@@ -159,9 +143,90 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         cv::hconcat(R, t, T_k_);
         cv::vconcat(T_k_, temp_, T_k_);
 
-        
         C_k_ =  C_k_minus_1_ * T_k_;
+        
+
+
+
+        //  =============== extract inlier kps from E_mask_  =======================
+
+        std::vector<cv::Point2f> kp_1f_in_, kp_2f_in_; //inlier kps_
+        std::vector<int> v_(E_mask_);
+
+        int mask_sum_ = std::accumulate(v_.begin(), v_.end(), 0);
+        
+        int v_sz_ = (int)v_.size() ; 
+
+        assert(v_sz_ == E_mask_.size().height);
+        assert((int)kp_1f_in_.size() == 0 && (int)kp_2f_in_.size() == 0);
+    
+        for(int vi = 0 ; vi < v_sz_ ; vi++) {
+
+            int mask_ = v_[vi]; 
+
+            if(mask_) {
+
+                kp_1f_in_.push_back(kp_1f[vi]);
+                kp_2f_in_.push_back(kp_2f[vi]);
+            }
+
+        }
+
+        assert((int)kp_1f_in_.size() == mask_sum_);
+
+        //  ================================================================================
+
+        //  ====================    Triangulating 3d points fronm 2d    ======================
+        
+        cv::Matx34f P_k_, P_k_minus_1_;
+        cv::Matx34f c_k_, c_k_minus_1_; 
+
+        c_k_ = convert44to33Mat(C_k_);
+        c_k_minus_1_ = convert44to33Mat(C_k_minus_1_);
+
+        P_k_ = K_ * c_k_;
+        P_k_minus_1_ = K_ * c_k_minus_1_;
+        
+        cv::Mat pts_4d_;
+
+        cv::triangulatePoints(P_k_, P_k_minus_1_, kp_1f_in_, kp_2f_in_, pts_4d_);
+        
+        std::cout << "kp_1f_in_.size(): " << (int)kp_1f_in_.size() << std::endl;
+        std::cout << "pts_4d_.size(): " << pts_4d_.size() << std::endl;
+
+        std::vector<cv::Point3f> pts_3d_;
+        convertPointsFromHomogeneous(pts_4d_, pts_3d_);
+
+        std::cout << "pts_3d_.size(): " << (int)pts_3d_.size() << std::endl;
+
+        assert((int)pts_3d_.size() == (int)pts_4d_.size().height);
+
+
+
+        
+        //  ==================================================================================
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         C_k_minus_1_ = C_k_;
+        last_idx_ = i;
 
         std::cout <<  i << "--->[x y z]: " << "(" <<C_k_.at<double>(0, 3) << "," << C_k_.at<double>(1, 3) << "," << C_k_.at<double>(2,3) << ")" << std::endl; 
         

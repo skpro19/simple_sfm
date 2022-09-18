@@ -19,4 +19,17 @@ namespace simple_sfm{
         
     }
 
+    cv::Matx34f convert44to33Mat(const cv::Mat &a_)
+    {
+        assert(a_.size() == cv::Size(4, 4));
+
+        cv::Mat roi = a_(cv::Rect2f(0 , 0, 4 , 3));
+        
+        assert(roi.size() == cv::Size(4, 3));
+        
+        return roi;
+
+    }
+
+
 };

@@ -1,15 +1,10 @@
 #ifndef SFM_UTIL_H
 #define SFM_UTIL_H
 
-/*
 
-- Add scale data for initialization
-- Plot predicted trajectory to see if everything's fine
-- incorporate PCL
-
-
-*/
-
+// ========================================================
+// =============   Utility functions     =================
+// ========================================================
 
 
 #include "ds.hpp"
@@ -33,6 +28,8 @@ namespace simple_sfm{
       
         }
     };
+
+    cv::Matx34f convert44to33Mat(const cv::Mat &a_);
 
 
 };

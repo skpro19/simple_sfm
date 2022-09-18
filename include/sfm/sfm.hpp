@@ -5,9 +5,12 @@
 // =============   Core SFM functions     =================
 // ========================================================
 
-#include "bookkeeping.hpp"
+//#include "bookkeeping.hpp"
 #include "sfm_utility.hpp"
 #include "vis.hpp"
+#include "debug.hpp"
+#include "io.hpp"
+#include "frame.hpp"
 
 namespace simple_sfm{
 
@@ -28,7 +31,7 @@ namespace simple_sfm{
 
             void runVOPipeline();
 
-            bool checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_);
+           // bool checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_) const;
 
             
           
@@ -36,11 +39,11 @@ namespace simple_sfm{
 
             
             std::shared_ptr<SFM_IO>                     io_;
-            std::shared_ptr<BookKeeping>                bkp_;
+            //std::shared_ptr<BookKeeping>                bkp_;
             
             std::vector<cv::String>                     frame_list_;
 
-            cv::Matx33d                                 K_;
+            cv::Matx33f                                 K_;
             cv::Matx34d                                 P_prev_;
             cv::Matx33d                                 R_prev_;
             cv::Matx31d                                 t_prev_;
