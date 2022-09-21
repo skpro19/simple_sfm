@@ -2,16 +2,17 @@
 
 #include <opencv2/calib3d.hpp>
 
+//#include <pcl/visualization/cloud_viewer.h>
 
 simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_) 
 {
 
     io_     =   std::make_shared<SFM_IO>(base_folder_);
-    //bkp_    =   std::make_shared<BookKeeping>();
-  
+   
     updateIOParams();
-    
+
 }
+
 
 void simple_sfm::SimpleSFM::updateIOParams() 
 {
@@ -26,6 +27,47 @@ void simple_sfm::SimpleSFM::updateIOParams()
     t_prev_ = cv::Matx31d(t_(0,0), t_(1, 0), t_(2,0));
     
     R_prev_ = io_->getR0();
+
+}
+
+void simple_sfm::SimpleSFM::update3DCloud(const std::vector<cv::Point3f> &pts_)
+{
+    std::cout << "pt_cld_3d_.size(): " << (int)pt_cld__3d_.size() << std::endl;
+
+    int n_ = (int)pts_.size() ; 
+
+    for(int i = 0 ;i < n_; i++) {
+        
+        cv::Point3f p1_ = pts_[i]; 
+
+        int m_ = (int)pt_cld__3d_.size(); 
+
+        bool found_ = false;
+
+        for(int j =0 ; j  < m_ ; j++) {
+
+            cv::Point3f p2_ = pt_cld__3d_[j];
+
+            double dis_ = cv::norm(p1_ - p2_);
+
+            if(dis_  < 0.05) {
+
+                found_ = true; 
+                break;
+
+            }
+
+        }
+
+        if(!found_) {
+
+            pt_cld__3d_.push_back(p1_);
+
+        } 
+
+    }
+
+    std::cout << "pt_cld_3d_.size(): " << (int)pt_cld__3d_.size() << std::endl;
 
 }
 
@@ -81,7 +123,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         std::vector<cv::Point2f> kp_1f, kp_2f; //array of keypoint co-ordinates
 
-        std::cout << "i: " << i << " kp_1_matched.size(): " << (int)Frame::kp_1_matched.size() << std::endl;
+        //std::cout << "i: " << i << " kp_1_matched.size(): " << (int)Frame::kp_1_matched.size() << std::endl;
 
         for(int k = 0; k < (int)Frame::kp_1_matched.size(); k++) {
 
@@ -112,7 +154,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         inlier_cnt_ = cv::recoverPose(E_, kp_2f, kp_1f, K_, R, t, E_mask_);
 
-        std::cout << "inlier_cnt_: " << inlier_cnt_ << std::endl;
+        //std::cout << "inlier_cnt_: " << inlier_cnt_ << std::endl;
 
         double scale_;
 
@@ -192,16 +234,16 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         cv::triangulatePoints(P_k_, P_k_minus_1_, kp_1f_in_, kp_2f_in_, pts_4d_);
         
         std::cout << "kp_1f_in_.size(): " << (int)kp_1f_in_.size() << std::endl;
-        std::cout << "pts_4d_.size(): " << pts_4d_.size() << std::endl;
+       // std::cout << "pts_4d_.size(): " << pts_4d_.size() << std::endl;
 
         std::vector<cv::Point3f> pts_3d_;
         convertPointsFromHomogeneous(pts_4d_, pts_3d_);
 
-        std::cout << "pts_3d_.size(): " << (int)pts_3d_.size() << std::endl;
+        //std::cout << "pts_3d_.size(): " << (int)pts_3d_.size() << std::endl;
 
         assert((int)pts_3d_.size() == (int)pts_4d_.size().height);
 
-
+        update3DCloud(pts_3d_);
 
         
         //  ==================================================================================
@@ -237,10 +279,10 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         Vis::updatePredictedPose(C_k_);
 
         cv::waitKey(10);
-    
-    
-    
-    
     }
+
+    std::cout << "pt_3d_cld_.size(): " << (int)pt_cld__3d_.size() << std::endl;
+
+    
 }
 

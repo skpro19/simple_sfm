@@ -33,13 +33,13 @@ namespace simple_sfm{
 
            // bool checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_) const;
 
-            
-          
+            void update3DCloud(const std::vector<cv::Point3f> &pts_);
+
+           
         private:
 
             
             std::shared_ptr<SFM_IO>                     io_;
-            //std::shared_ptr<BookKeeping>                bkp_;
             
             std::vector<cv::String>                     frame_list_;
 
@@ -53,11 +53,16 @@ namespace simple_sfm{
 
             std::vector<cv::Matx34d>                    gt_poses_;
 
+            std::vector<cv::Point3f>                    pt_cld__3d_;
+
+
+
             //**debugging
             //std::vector<cv::KeyPoint> kp_1, kp_2;
             //std::vector<cv::KeyPoint> kp_1_matched, kp_2_matched; 
             void match_features(const cv::Mat &img_1, const cv::Mat &img_2);
             double getScale(int curr_idx_, int prev_idx_);
+            
     };
 
 

@@ -6,6 +6,12 @@ add_compile_options(-std=c++11)
 find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 
+find_package(PCL 1.7 REQUIRED)
+add_definitions(${PCL_DEFINITIONS})
+
+include_directories(... ${PCL_INCLUDE_DIRS})
+link_directories(... ${PCL_LIBRARY_DIRS})
+
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 add_definitions(
@@ -27,4 +33,5 @@ add_executable(simple_sfm
 
 target_link_libraries(simple_sfm
     ${OpenCV_LIBS}
+    ${PCL_LIBRARIES}
 )
