@@ -9,10 +9,18 @@
 
 #include "ds.hpp"
 
+#include <opencv2/core/eigen.hpp>
+#include <Eigen/Core>
+
 namespace simple_sfm{
 
     void convertPointsFromHomogeneous(cv::Mat &pts_4d_, std::vector<Point3D> &pts_3d_);
+    
+    Eigen::Matrix<float, 9, 1> packCameraIntrinsics(const cv::Mat &K);
+    Eigen::Matrix<float, 6, 1> packCameraExtrinsics(const cv::Mat &A_);
 
+
+    
     struct compare_kp {
         bool operator() (const cv::KeyPoint& a_, const cv::KeyPoint& b_) const {
             

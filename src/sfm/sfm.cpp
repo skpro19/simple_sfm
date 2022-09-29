@@ -36,7 +36,8 @@ void simple_sfm::SimpleSFM::update3DCloud(const std::vector<cv::Point3f> &pts_)
 
     int n_ = (int)pts_.size() ; 
 
-    for(int i = 0 ;i < n_; i++) {
+    for(int i = 0 ;i < n_; i++) 
+    {
         
         cv::Point3f p1_ = pts_[i]; 
 
@@ -103,6 +104,8 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
     int sz_ = frame_list_.size(); 
 
+    views_.resize(sz_);
+
     for(int i = 1 ; i < 200; i++) {
 
         //std::cout 
@@ -116,7 +119,6 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         cv::Mat img_1 = cv::imread(frame_list_[last_idx_].c_str());
         cv::Mat img_2 = cv::imread(frame_list_[i].c_str());
 
-        //match_features(img_1, img_2);
         Frame::extractAndMatchFeatures(img_1, img_2);
 
         assert((int)Frame::kp_1_matched.size() == (int)Frame::kp_2_matched.size());
@@ -167,15 +169,16 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         bool duplicate_flag_ = checkForDuplicates(kp_1f, kp_2f);
 
+        assert(duplicate_flag_);
+
         scale_ = Frame::getScale(cv::Mat(gt_poses_[i]), cv::Mat(gt_poses_[last_idx_])); 
 
         bool flag_ = ((scale_ > 0.1) &&  (del_z_ > del_x_) && (del_z_ > del_y_))  ; 
         
         std::cout << std::endl;
 
-        if(!flag_) {continue; ;}
+        if(!flag_) {continue;}
         
-
 
         cv::Mat temp_ = (cv::Mat_<double>(1, 4) << 0, 0, 0, 1); 
         temp_.convertTo(temp_, CV_64F);
@@ -186,10 +189,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         cv::vconcat(T_k_, temp_, T_k_);
 
         C_k_ =  C_k_minus_1_ * T_k_;
-        
-
-
-
+     
         //  =============== extract inlier kps from E_mask_  =======================
 
         std::vector<cv::Point2f> kp_1f_in_, kp_2f_in_; //inlier kps_
@@ -218,7 +218,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         //  ================================================================================
 
-        //  ====================    Triangulating 3d points fronm 2d    ======================
+        //  ====================    Triangulating 3d points from 2d  ======================
         
         cv::Matx34f P_k_, P_k_minus_1_;
         cv::Matx34f c_k_, c_k_minus_1_; 
@@ -245,33 +245,28 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         update3DCloud(pts_3d_);
 
+        // ! ======================= VIEW PROCESSING  ===========================
+
+
+            std::shared_ptr<View> view_ = std::make_shared<View>();
+            
+            view_->updateView(kp_2f, pts_3d_, K_, C_k_);
+            views_.push_back(view_);
+
+        // ! ===================================================================
+
+
+
         
         //  ==================================================================================
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         C_k_minus_1_ = C_k_;
         last_idx_ = i;
 
         std::cout <<  i << "--->[x y z]: " << "(" <<C_k_.at<double>(0, 3) << "," << C_k_.at<double>(1, 3) << "," << C_k_.at<double>(2,3) << ")" << std::endl; 
         
+        
+
         cv::imshow("img_1" , img_1);
         Vis::drawKeyPoints(img_1, kp_1f, kp_2f);
 
@@ -283,6 +278,6 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
     std::cout << "pt_3d_cld_.size(): " << (int)pt_cld__3d_.size() << std::endl;
 
-    
+        
 }
 

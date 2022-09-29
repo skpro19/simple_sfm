@@ -11,8 +11,13 @@
 #include "debug.hpp"
 #include "io.hpp"
 #include "frame.hpp"
+#include "view.hpp"
+
 
 namespace simple_sfm{
+
+    
+
 
     class SimpleSFM{
 
@@ -50,18 +55,16 @@ namespace simple_sfm{
             cv::Matx34d                                 C_prev_;
 
 
-
             std::vector<cv::Matx34d>                    gt_poses_;
-
             std::vector<cv::Point3f>                    pt_cld__3d_;
-
-
-
+            
             //**debugging
             //std::vector<cv::KeyPoint> kp_1, kp_2;
             //std::vector<cv::KeyPoint> kp_1_matched, kp_2_matched; 
             void match_features(const cv::Mat &img_1, const cv::Mat &img_2);
             double getScale(int curr_idx_, int prev_idx_);
+
+            std::vector<std::shared_ptr<View> > views_;
             
     };
 

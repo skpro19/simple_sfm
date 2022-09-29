@@ -11,9 +11,15 @@
 
 #include <map>
 
+
+
 namespace simple_sfm {
 
-    
+
+ 
+
+
+
     class BookKeeping{
 
         public: 
