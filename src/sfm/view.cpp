@@ -1,6 +1,25 @@
 #include "../../include/sfm/view.hpp"
 
 
+simple_sfm::View::View(){
+
+
+}
+
+void simple_sfm::View::updateView(  const std::vector<cv::Point2f> &kp_in_, 
+                                    const std::vector<cv::Point3f> &pts_3d_, 
+                                     const cv::Matx33f &K_,
+                                    const cv::Mat &C_k_){
+                            
+    used_ = 1;
+    processKeypoints(kp_in_);
+    processCameraIntrinsics(K_);
+    processCameraExtrinsics(C_k_);
+    process3dPoints(pts_3d_);
+
+
+}
+
 void simple_sfm::View::processKeypoints(const std::vector<cv::Point2f> &kps_){
 
     pts_2d_ = std::make_shared<std::vector<Vec2f> >();
@@ -38,7 +57,7 @@ void simple_sfm::View::processCameraExtrinsics(const cv::Mat &mat_){
 
 }
 
-//TODO --> Tune norm + check what does norm mean
+//TODO --> Tune norm + check what does norm mean    
 void simple_sfm::View::process3dPoints(const std::vector<cv::Point3f> &points_3d_){
 
     int n_ =    (int)points_3d_.size(); 
@@ -47,6 +66,8 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3f> &points_3d
     pts_3d_ = std::make_shared<std::vector<Vec3f> >();
 
     int new_pts_counter_ = 0 ;        
+
+    std::cout << "old point_cloud.size(): " << (int)point_cloud_.size() << std::endl;
 
     for(int j =0 ; j < n_ ; j++){
 
@@ -60,7 +81,7 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3f> &points_3d
 
         for(int i = 0 ; i < m_; i++){
             
-            Vec3f pt_ = point_cloud_[i];
+            Vec3f pt_ = View::point_cloud_[i];
             
             Vec3f diff_ = curr_pt_ - pt_;
 
@@ -86,7 +107,8 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3f> &points_3d
             pts_3d_->push_back(point_cloud_[idx_]);
 
         }else{
-
+            
+            View::point_cloud_.push_back(curr_pt_);
             pts_3d_->push_back(curr_pt_);
             new_pts_counter_++;
 
@@ -95,5 +117,7 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3f> &points_3d
     }
 
     std::cout << "new_pts_counter_: " << new_pts_counter_ << std::endl;
+    std::cout << "new point_cloud.size(): " << point_cloud_.size() << std::endl;
+
 
 }

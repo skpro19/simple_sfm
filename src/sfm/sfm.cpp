@@ -11,8 +11,59 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
    
     updateIOParams();
 
+    ceres::Problem::Options problem_options_;
+    ceres::Problem problem(problem_options_);
+
 }
 
+void simple_sfm::SimpleSFM::runBundleAdjust(){
+
+    int n_ = (int)views_.size(); 
+    
+    int unused_cnt_ = 0 ;
+
+    std::cout << "n_: " << n_ << std::endl;
+
+    for(int i = 0 ; i < n_; i++){
+        
+        if(views_[i] == nullptr){
+
+            continue;
+
+        }
+        
+        std::shared_ptr<View> view_(views_[i]);
+        
+        assert(view_->pts_2d_->size() == view_->pts_3d_->size());
+
+        int m_ = (int)view_->pts_2d_->size();
+
+        for(int j = 0 ; j < m_; j++) {
+
+            //float x_ = view_->pts_2d_[j](0,0);
+            //float y_ = 
+
+            float x_ , y_; 
+
+            ceres::CostFunction* cf_ = ReprojectionError::create(x_, y_);
+            problem
+
+
+        }
+        
+
+        
+        
+
+
+
+
+        
+    }
+
+    std::cout << "unused_cnt_: " << unused_cnt_ << std::endl;
+
+}
 
 void simple_sfm::SimpleSFM::updateIOParams() 
 {
@@ -95,7 +146,6 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
     cv::Mat TEMP_ = (cv::Mat_<double>(1, 4) << 0, 0, 0, 1); 
     TEMP_.convertTo(TEMP_, CV_64F);
     
-    
     //** Initializing C_k_minus_1 with 0 translation and 0 rotation w.r.t. the 'some' initial co-ordinate frame
     cv::hconcat(NO_ROT_, NO_T_, C_k_minus_1_);
     cv::vconcat(C_k_minus_1_, TEMP_, C_k_minus_1_);
@@ -106,9 +156,9 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
     views_.resize(sz_);
 
-    for(int i = 1 ; i < 200; i++) {
+    for(int i = 1 ; i < 50; i++) {
 
-        //std::cout 
+        std::cout << "i: " << i << std::endl;
     
         Frame::kp_1.resize(0); 
         Frame::kp_2.resize(0); 
@@ -139,6 +189,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
             cv::circle( img_1, p2_, 2, cv::viz::Color::orange_red(), -1 );
         }
         
+        //std::cout << "HI" << std::endl;
         //======== check for duplicate kps ==============
 
         bool dup_kp_flag_ = checkForDuplicates(kp_1f, kp_2f);
@@ -223,8 +274,8 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         cv::Matx34f P_k_, P_k_minus_1_;
         cv::Matx34f c_k_, c_k_minus_1_; 
 
-        c_k_ = convert44to33Mat(C_k_);
-        c_k_minus_1_ = convert44to33Mat(C_k_minus_1_);
+        c_k_ = convert44to34Mat(C_k_);
+        c_k_minus_1_ = convert44to34Mat(C_k_minus_1_);
 
         P_k_ = K_ * c_k_;
         P_k_minus_1_ = K_ * c_k_minus_1_;
@@ -234,26 +285,22 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         cv::triangulatePoints(P_k_, P_k_minus_1_, kp_1f_in_, kp_2f_in_, pts_4d_);
         
         std::cout << "kp_1f_in_.size(): " << (int)kp_1f_in_.size() << std::endl;
-       // std::cout << "pts_4d_.size(): " << pts_4d_.size() << std::endl;
-
+       
         std::vector<cv::Point3f> pts_3d_;
+        
         convertPointsFromHomogeneous(pts_4d_, pts_3d_);
-
-        //std::cout << "pts_3d_.size(): " << (int)pts_3d_.size() << std::endl;
-
+        
         assert((int)pts_3d_.size() == (int)pts_4d_.size().height);
+        
+        // * ======================= VIEW PROCESSING  ===========================
 
-        update3DCloud(pts_3d_);
-
-        // ! ======================= VIEW PROCESSING  ===========================
-
-
+            
             std::shared_ptr<View> view_ = std::make_shared<View>();
             
             view_->updateView(kp_2f, pts_3d_, K_, C_k_);
-            views_.push_back(view_);
+            views_[i] = view_;
 
-        // ! ===================================================================
+        // * ===================================================================
 
 
 
@@ -267,17 +314,17 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         
         
 
-        cv::imshow("img_1" , img_1);
-        Vis::drawKeyPoints(img_1, kp_1f, kp_2f);
+        //cv::imshow("img_1" , img_1);
+        //Vis::drawKeyPoints(img_1, kp_1f, kp_2f);
 
-        Vis::updateGroundPose(cv::Mat(gt_poses_[i]));
-        Vis::updatePredictedPose(C_k_);
+        //Vis::updateGroundPose(cv::Mat(gt_poses_[i]));
+        //Vis::updatePredictedPose(C_k_);
 
         cv::waitKey(10);
     }
 
     std::cout << "pt_3d_cld_.size(): " << (int)pt_cld__3d_.size() << std::endl;
 
-        
+    runBundleAdjust();  
 }
 

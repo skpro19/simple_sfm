@@ -8,16 +8,18 @@
 //#include "bookkeeping.hpp"
 #include "sfm_utility.hpp"
 #include "vis.hpp"
-#include "debug.hpp"
 #include "io.hpp"
 #include "frame.hpp"
 #include "view.hpp"
+#include "ba.hpp"
+
+#include <ceres/cost_function.h>
 
 
 namespace simple_sfm{
 
     
-
+    class View;
 
     class SimpleSFM{
 
@@ -36,6 +38,7 @@ namespace simple_sfm{
 
             void runVOPipeline();
 
+            void runBundleAdjust();
            // bool checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_) const;
 
             void update3DCloud(const std::vector<cv::Point3f> &pts_);
