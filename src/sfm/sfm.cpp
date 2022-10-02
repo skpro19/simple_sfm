@@ -11,12 +11,16 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
    
     updateIOParams();
 
-    ceres::Problem::Options problem_options_;
-    ceres::Problem problem(problem_options_);
+    //ceres::Problem::Options problem_options_;
+    //ceres::Problem problem(problem_options_);
 
 }
 
 void simple_sfm::SimpleSFM::runBundleAdjust(){
+
+    ceres::Problem::Options problem_options;
+    ceres::Problem problem(problem_options);
+        
 
     int n_ = (int)views_.size(); 
     
@@ -38,30 +42,34 @@ void simple_sfm::SimpleSFM::runBundleAdjust(){
 
         int m_ = (int)view_->pts_2d_->size();
 
+        Mat3d intrinsics_ = view_->cam_intrinsics_;
+        Vec6d &extrinsics_ = view_->cam_extrinsics_;
+        
         for(int j = 0 ; j < m_; j++) {
+            
+            float x_= view_->pts_2d_->at(j)[0];
+            float y_= view_->pts_2d_->at(j)[1];
 
-            //float x_ = view_->pts_2d_[j](0,0);
-            //float y_ = 
-
-            float x_ , y_; 
-
-            ceres::CostFunction* cf_ = ReprojectionError::create(x_, y_);
-            problem
-
+            Vec3d &pt_ = view_->pts_3d_->at(j);
+            
+            ceres::CostFunction* cost_function = ReprojectionError::create(x_, y_, intrinsics_);
+            
+            //problem.AddResidualBlock(cost_function, NULL, &extrinsics_(0), &pt_(0));
 
         }
-        
-
-        
-        
-
-
-
-
-        
     }
 
-    std::cout << "unused_cnt_: " << unused_cnt_ << std::endl;
+    ceres::Solver::Options options;
+    options.use_nonmonotonic_steps = true;
+    options.preconditioner_type = ceres::SCHUR_JACOBI;
+    options.linear_solver_type = ceres::ITERATIVE_SCHUR;
+    options.use_inner_iterations = true;
+    options.max_num_iterations = 100;
+    options.minimizer_progress_to_stdout = true;
+
+    ceres::Solver::Summary summary;
+    ceres::Solve(options, &problem, &summary);
+    std::cout << summary.BriefReport() << std::endl;
 
 }
 
@@ -90,7 +98,7 @@ void simple_sfm::SimpleSFM::update3DCloud(const std::vector<cv::Point3f> &pts_)
     for(int i = 0 ;i < n_; i++) 
     {
         
-        cv::Point3f p1_ = pts_[i]; 
+        cv::Point3d p1_ = pts_[i]; 
 
         int m_ = (int)pt_cld__3d_.size(); 
 
@@ -98,7 +106,7 @@ void simple_sfm::SimpleSFM::update3DCloud(const std::vector<cv::Point3f> &pts_)
 
         for(int j =0 ; j  < m_ ; j++) {
 
-            cv::Point3f p2_ = pt_cld__3d_[j];
+            cv::Point3d p2_ = pt_cld__3d_[j];
 
             double dis_ = cv::norm(p1_ - p2_);
 
@@ -173,7 +181,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         assert((int)Frame::kp_1_matched.size() == (int)Frame::kp_2_matched.size());
 
-        std::vector<cv::Point2f> kp_1f, kp_2f; //array of keypoint co-ordinates
+        std::vector<cv::Point2d> kp_1f, kp_2f; //array of keypoint co-ordinates
 
         //std::cout << "i: " << i << " kp_1_matched.size(): " << (int)Frame::kp_1_matched.size() << std::endl;
 
@@ -286,7 +294,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         
         std::cout << "kp_1f_in_.size(): " << (int)kp_1f_in_.size() << std::endl;
        
-        std::vector<cv::Point3f> pts_3d_;
+        std::vector<cv::Point3d> pts_3d_;
         
         convertPointsFromHomogeneous(pts_4d_, pts_3d_);
         

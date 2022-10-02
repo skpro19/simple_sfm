@@ -4,42 +4,41 @@
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
+typedef Eigen::Matrix<double, 3, 3> Mat3d;
+
+
 namespace simple_sfm{
 
     struct ReprojectionError{
 
-        ReprojectionError(const double obs_x, const double obs_y, const Mat3f &intrinsics): obs_x_(obs_x), obs_y_(obs_y), intrinsics_(intrinsics){}
+        ReprojectionError(const double obs_x, const double obs_y, const Mat3d &intrinsics): obs_x_(obs_x), obs_y_(obs_y), intrinsics_(intrinsics){}
 
         template<typename T>
         bool operator()(const T* const extrinsics, //extrincs
-                        const T* const point, //world point
+                        const T* const X, //world point
                         T* residules) const
         {
             
             
-            Vec3f RX_, t_, p_;
-            ceres::AngleAxisRotatePoint(extrinsics, point, RX_);
+            T x[3];
+            ceres::AngleAxisRotatePoint(extrinsics, X, x);
             
-            t_ << extrinsics[3] , extrinsics[4] , extrinsics[5];
+            x[0] += extrinsics[3];
+            x[1] += extrinsics[4];
+            x[2] += extrinsics[5];
             
-            p_ = RX_ + t_;  // p_ =  R_ * point_ + t_;
-
-            Vec3f pred_ = intrinsics_ * p_;     // x = K[R|t] * X
-
-
-            T pred_x_ = pred_[0]/pred_[2];  
-            T pred_y_ = pred_[1]/pred_[2]; 
+            T pred_x_ = intrinsics_(0,0) * x[0] / x[2] + intrinsics_(0,2);
+            T pred_y_ = intrinsics_(1,1) * x[1] / x[2] + intrinsics_(1,2); 
             
-
-            residules[0] = pred_x_ - T(xo_);
-            residules[1] = pred_y_ - T(yo_);
+            residules[0] = pred_x_ - T(obs_x_);
+            residules[1] = pred_y_ - T(obs_y_);
             
             return true;
 
         }
         
         static ceres::CostFunction* create(const float observed_x,
-                                       const float observed_y, const Mat3f intrinsics){
+                                       const float observed_y, const Mat3d intrinsics){
             
             return (new ceres::AutoDiffCostFunction<ReprojectionError, 2, 6, 3>(
                     new ReprojectionError(observed_x, observed_y, intrinsics)));
@@ -47,20 +46,10 @@ namespace simple_sfm{
 
 
         const double obs_x_, obs_y_;
-        const Mat3f intrinsics_;
+        const Mat3d intrinsics_;
     };
 
-
-
-    
-
-
-
-
-
 };
-
-
 
 
 #endif 

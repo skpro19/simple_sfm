@@ -14,12 +14,14 @@
 
 namespace simple_sfm{
 
+    //void MatToEigen(const cv::Mat &mat_, )
+
     void convertPointsFromHomogeneous(cv::Mat &pts_4d_, std::vector<Point3D> &pts_3d_);
     
     //Eigen::Matrix<float, 9, 1> packCameraIntrinsics(const cv::Mat &K);
     //Eigen::Matrix<float, 6, 1> packCameraExtrinsics(const cv::Mat &A_);
 
-    bool checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_);
+    bool checkForDuplicates(const std::vector<cv::Point2d> &a_  , const std::vector<cv::Point2d> &b_);
     
     struct compare_kp {
         bool operator() (const cv::KeyPoint& a_, const cv::KeyPoint& b_) const {

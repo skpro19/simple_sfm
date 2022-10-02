@@ -16,6 +16,8 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 find_package(Eigen3 REQUIRED)
 include_directories(EIGEN3_INCLUDE_DIR)
 
+find_package(Ceres REQUIRED)
+
 add_definitions(
     -DBOOST_COROUTINE_NO_DEPRECATION_WARNING=1
     -DBOOST_ALL_DYN_LINK=1
@@ -36,4 +38,5 @@ target_link_libraries(simple_sfm
     ${OpenCV_LIBS}
     ${PCL_LIBRARIES}
     Eigen3::Eigen
+    ceres
 )

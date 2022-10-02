@@ -1,11 +1,13 @@
-#include "../../include/sfm/sfm_utility.hpp"
+//#include "../../include/sfm/sfm_utility.hpp"
+
+#include "../../include/sfm/sfm.hpp"
 
 namespace simple_sfm{
 
 
-    bool checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_){
+    bool checkForDuplicates(const std::vector<cv::Point2d> &a_  , const std::vector<cv::Point2d> &b_){
 
-        std::set<std::pair<float, float> > sa_, sb_; 
+        std::set<std::pair<double, double> > sa_, sb_; 
 
         assert((int)a_.size() == (int)b_.size());
         
@@ -13,7 +15,7 @@ namespace simple_sfm{
 
         for(int i = 0 ;i < n_;  i++) {
 
-            std::pair<float, float> pa_, pb_; 
+            std::pair<double, double> pa_, pb_; 
             
             pa_ = {a_[i].x, a_[i].y},  pb_ = {b_[i].x, b_[i].y}; 
             

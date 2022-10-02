@@ -1,5 +1,6 @@
-#include "../../include/sfm/vis.hpp"
+//#include "../../include/sfm/vis.hpp"
 
+#include "../../include/sfm/sfm.hpp"
 
 simple_sfm::Vis::Vis()
 {
@@ -26,7 +27,7 @@ void simple_sfm::Vis::updateGroundPose(const cv::Matx34d &pose_)
     cv::circle(Vis::gt_mat_, p_ ,1, cv::viz::Color::celestial_blue(), 2);
     cv::imshow("gt_", Vis::gt_mat_);
     
-} 
+}    
 
 void simple_sfm::Vis::updatePredictedPose(const cv::Mat &pose_)
 {

@@ -1,4 +1,6 @@
-#include "../../include/sfm/view.hpp"
+//#include "../../include/sfm/view.hpp"
+
+#include "../../include/sfm/sfm.hpp"
 
 
 simple_sfm::View::View(){
@@ -6,9 +8,9 @@ simple_sfm::View::View(){
 
 }
 
-void simple_sfm::View::updateView(  const std::vector<cv::Point2f> &kp_in_, 
-                                    const std::vector<cv::Point3f> &pts_3d_, 
-                                     const cv::Matx33f &K_,
+void simple_sfm::View::updateView(  const std::vector<cv::Point2d> &kp_in_, 
+                                    const std::vector<cv::Point3d> &pts_3d_, 
+                                     const cv::Matx33d&K_,
                                     const cv::Mat &C_k_){
                             
     used_ = 1;
@@ -20,9 +22,9 @@ void simple_sfm::View::updateView(  const std::vector<cv::Point2f> &kp_in_,
 
 }
 
-void simple_sfm::View::processKeypoints(const std::vector<cv::Point2f> &kps_){
+void simple_sfm::View::processKeypoints(const std::vector<cv::Point2d> &kps_){
 
-    pts_2d_ = std::make_shared<std::vector<Vec2f> >();
+    pts_2d_ = std::make_shared<std::vector<Vec2d> >();
     
     for(int i = 0; i < (int)kps_.size(); i++) {
 
@@ -34,7 +36,7 @@ void simple_sfm::View::processKeypoints(const std::vector<cv::Point2f> &kps_){
 
 }
 
-void simple_sfm::View::processCameraIntrinsics(const cv::Matx33f &in_){
+void simple_sfm::View::processCameraIntrinsics(const cv::Matx33d &in_){
 
     //cam_intrinsics_ = std::make_shared<Mat3f>(); 
     cam_intrinsics_ << in_(0,0), in_(0,1), in_(0,2),
@@ -47,23 +49,27 @@ void simple_sfm::View::processCameraIntrinsics(const cv::Matx33f &in_){
 void simple_sfm::View::processCameraExtrinsics(const cv::Mat &mat_){
 
     assert(mat_.size() == cv::Size(4,4));
+    std::cout << "processCameraExtrinsics function!" << std::endl;
+    
+    Mat4d ex_;
+    cv::cv2eigen(mat_, ex_);
 
-    cv::Matx44f ext_(mat_);
+    Vec6d cam_extrinsics_;
+    Mat3d R = ex_.block<3, 3>(0, 0).cast<double>();
 
-    cam_extrinsics_ <<  ext_(0,0), ext_(0,1), ext_(0,2), ext_(0,3),
-                        ext_(1,0), ext_(1,1), ext_(1,2), ext_(1,3),
-                        ext_(2,0), ext_(2,1), ext_(2,2), ext_(2,3);
+    ceres::RotationMatrixToAngleAxis(&R(0, 0), &cam_extrinsics_(0));        
 
-
+    cam_extrinsics_.tail<3>() = ex_.cast<double>().block<3, 1>(0, 3);
+    
 }
 
 //TODO --> Tune norm + check what does norm mean    
-void simple_sfm::View::process3dPoints(const std::vector<cv::Point3f> &points_3d_){
+void simple_sfm::View::process3dPoints(const std::vector<cv::Point3d> &points_3d_){
 
     int n_ =    (int)points_3d_.size(); 
     int m_  =   (int)point_cloud_.size();
 
-    pts_3d_ = std::make_shared<std::vector<Vec3f> >();
+    pts_3d_ = std::make_shared<std::vector<Vec3d> >();
 
     int new_pts_counter_ = 0 ;        
 
@@ -71,7 +77,7 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3f> &points_3d
 
     for(int j =0 ; j < n_ ; j++){
 
-        Vec3f curr_pt_;
+        Vec3d curr_pt_;
         curr_pt_ << points_3d_[j].x, points_3d_[j].y, points_3d_[j].z;
         
         bool found_ = 0 ;
@@ -81,11 +87,11 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3f> &points_3d
 
         for(int i = 0 ; i < m_; i++){
             
-            Vec3f pt_ = View::point_cloud_[i];
+            Vec3d pt_ = View::point_cloud_[i];
             
-            Vec3f diff_ = curr_pt_ - pt_;
+            Vec3d diff_ = curr_pt_ - pt_;
 
-            float norm_ = diff_.norm();
+            double norm_ = diff_.norm();
             
             if(norm_ < 0.1) {
                 

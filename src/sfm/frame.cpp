@@ -1,5 +1,7 @@
-#include "../../include/sfm/frame.hpp"
-#include "../../include/sfm/sfm_utility.hpp"
+//#include "../../include/sfm/frame.hpp"
+//#include "../../include/sfm/sfm_utility.hpp"
+
+#include "../../include/sfm/sfm.hpp"
 
 #include <opencv2/viz/types.hpp>
 

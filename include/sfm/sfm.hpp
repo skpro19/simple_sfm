@@ -12,8 +12,11 @@
 #include "frame.hpp"
 #include "view.hpp"
 #include "ba.hpp"
+#include "io.hpp"
 
 #include <ceres/cost_function.h>
+#include <opencv2/core/eigen.hpp>
+
 
 
 namespace simple_sfm{
@@ -68,6 +71,8 @@ namespace simple_sfm{
             double getScale(int curr_idx_, int prev_idx_);
 
             std::vector<std::shared_ptr<View> > views_;
+            
+            std::vector<std::shared_ptr<Mat34f> >cam_extrinsics_;
             
     };
 
