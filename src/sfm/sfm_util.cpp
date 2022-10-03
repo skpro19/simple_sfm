@@ -5,6 +5,23 @@
 namespace simple_sfm{
 
 
+    cv::Matx44d unpackCameraExtrinsics(const Vec6d &extrinsics){
+        
+        Mat3d R;
+        ceres::AngleAxisToRotationMatrix(&extrinsics(0), &R(0, 0));
+
+        Mat4d M;
+        M.block<3, 3>(0, 0) = R.cast<double>();
+        M.block<3, 1>(0, 3) = extrinsics.tail<3>().cast<double>();
+
+        cv::Matx44d mat_;
+        cv::eigen2cv(M, mat_);
+        
+        assert(mat_.rows == 4  && mat_.cols == 4);
+
+        return mat_;
+    }
+
     bool checkForDuplicates(const std::vector<cv::Point2d> &a_  , const std::vector<cv::Point2d> &b_){
 
         std::set<std::pair<double, double> > sa_, sb_; 

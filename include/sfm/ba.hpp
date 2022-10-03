@@ -4,8 +4,9 @@
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
-typedef Eigen::Matrix<double, 3, 3> Mat3d;
+//typedef Eigen::Matrix<double, 3, 3> Mat3d;
 
+#include "sfm.hpp"
 
 namespace simple_sfm{
 

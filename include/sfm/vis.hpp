@@ -6,9 +6,7 @@
 //  =============   Visualization related functions  ==========================
 //  ===========================================================================
 
-#include "sfm.hpp"
-
-
+#include "ds.hpp"
 #include <opencv2/viz/types.hpp>
 
 

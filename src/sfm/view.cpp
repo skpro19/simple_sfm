@@ -50,7 +50,7 @@ void simple_sfm::View::processCameraIntrinsics(const cv::Matx33d &in_){
 void simple_sfm::View::processCameraExtrinsics(const cv::Mat &mat_){
 
     assert(mat_.size() == cv::Size(4,4));
-    std::cout << "processCameraExtrinsics function!" << std::endl;
+//    // std::cout << "processCameraExtrinsics function!" << std::endl;
     
     Mat4d ex_;
     cv::cv2eigen(mat_, ex_);
@@ -74,7 +74,7 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3d> &points_3d
 
     int new_pts_counter_ = 0 ;        
 
-    std::cout << "old point_cloud.size(): " << (int)point_cloud_.size() << std::endl;
+    //std::cout << "old point_cloud.size(): " << (int)point_cloud_.size() << std::endl;
 
     for(int j =0 ; j < n_ ; j++){
 
@@ -124,8 +124,8 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3d> &points_3d
 
     }
 
-    std::cout << "new_pts_counter_: " << new_pts_counter_ << std::endl;
-    std::cout << "new point_cloud.size(): " << point_cloud_.size() << std::endl;
+    //std::cout << "new_pts_counter_: " << new_pts_counter_ << std::endl;
+    //std::cout << "new point_cloud.size(): " << point_cloud_.size() << std::endl;
 
 
 }

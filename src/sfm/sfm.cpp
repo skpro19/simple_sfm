@@ -79,13 +79,14 @@ void simple_sfm::SimpleSFM::runBundleAdjust(){
         if(views_[i] == nullptr) {continue;}
         std::shared_ptr<View> view_(views_[i]);
 
-        //if(view_)
+        cv::Matx44d ext_mat_ = unpackCameraExtrinsics(view_->cam_extrinsics_);
+        Vis::updatePredictedPose(cv::Mat(ext_mat_));
         
         std::cout << "index: " << i << std::endl;
         std::cout << "extrinsics_: " << view_->cam_extrinsics_ << std::endl;
+
+
     }
-
-
 }
 
 void simple_sfm::SimpleSFM::updateIOParams() 
@@ -178,6 +179,10 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
     int sz_ = frame_list_.size(); 
 
     views_.resize(sz_);
+
+    ceres::Problem::Options problem_options;
+    ceres::Problem problem(problem_options);
+    
 
     for(int i = 1 ; i < 10; i++) {
 
@@ -307,7 +312,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         cv::triangulatePoints(P_k_, P_k_minus_1_, kp_1f_in_, kp_2f_in_, pts_4d_);
         
-        std::cout << "kp_1f_in_.size(): " << (int)kp_2f_in_.size() << std::endl;
+        //std::cout << "kp_1f_in_.size(): " << (int)kp_2f_in_.size() << std::endl;
        
         std::vector<cv::Point3d> pts_3d_;
         
@@ -324,8 +329,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         // * ===================================================================
 
-
-
+            
         
         //  ==================================================================================
 
@@ -345,8 +349,8 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         cv::waitKey(10);
     }
 
-    std::cout << "pt_3d_cld_.size(): " << (int)pt_cld__3d_.size() << std::endl;
+    //std::cout << "pt_3d_cld_.size(): " << (int)pt_cld__3d_.size() << std::endl;
 
-    runBundleAdjust();  
+    //runBundleAdjust();  
 }
 
