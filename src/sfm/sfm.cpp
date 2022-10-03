@@ -296,7 +296,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
        
         std::vector<cv::Point3d> pts_3d_;
         
-        convertPointsFromHomogeneous(pts_4d_, pts_3d_);
+        convertPointsFromHomogeneous_(pts_4d_, pts_3d_);
         
         assert((int)pts_3d_.size() == (int)pts_4d_.size().height);
         

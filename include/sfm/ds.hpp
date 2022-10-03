@@ -10,7 +10,7 @@
 #include <opencv2/opencv.hpp>
 
 using Point2D       =       cv::Point2f ;
-using Point3D       =       cv::Point3f;
+using Point3D       =       cv::Point3d;
 
 using Points2D      =       std::vector<Point2D> ;
 using Points3D      =       std::vector<cv::Point3f> ;

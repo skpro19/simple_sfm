@@ -56,18 +56,25 @@ namespace simple_sfm{
 
     }*/ 
 
-    void convertPointsFromHomogeneous(cv::Mat &pts_4d_, std::vector<Point3D> &pts_3d_)
-    {
+    void convertPointsFromHomogeneous_(cv::Mat &pts_4d_, std::vector<Point3D> &pts_3d_)
+    {       
         assert(("[sfm_utility]" , (int)pts_3d_.size() == 0));
         
         pts_4d_ = pts_4d_.t(); 
 
         int n_ = (int)pts_4d_.size().height; 
 
-        pts_3d_.resize(n_);
-        
-        cv::convertPointsFromHomogeneous(pts_4d_, pts_3d_);
-        
+        for(int i = 0 ; i < n_ ; i++) {
+
+            double a_ = pts_4d_.at<double>(i,0);
+            double b_ = pts_4d_.at<double>(i,1);
+            double c_ = pts_4d_.at<double>(i,2);
+            double d_ = pts_4d_.at<double>(i,3);   
+
+            pts_3d_.push_back({a_/d_, b_/d_, c_/d_});
+
+        }
+
         assert(("[sfm_utility]" , (int)pts_3d_.size() == n_));
         
     }
