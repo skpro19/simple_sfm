@@ -48,13 +48,7 @@ namespace simple_sfm{
             //Mat34f cam_extrinsics_;
             
             Vec6d cam_extrinsics_;
-            std::shared_ptr<std::vector<Vec3d> >pts_3d_;
-            
-        
-        private:
-
-
-
+            std::shared_ptr<std::vector<int> >indices_3d_pts_;
             
             inline static std::vector<Vec3d>  point_cloud_;
 

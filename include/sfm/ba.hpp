@@ -49,6 +49,8 @@ namespace simple_sfm{
         const Mat3d intrinsics_;
     };
 
+
+    
 };
 
 

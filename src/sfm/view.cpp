@@ -12,7 +12,8 @@ void simple_sfm::View::updateView(  const std::vector<cv::Point2d> &kp_in_,
                                     const std::vector<cv::Point3d> &pts_3d_, 
                                      const cv::Matx33d&K_,
                                     const cv::Mat &C_k_){
-                            
+    
+    
     used_ = 1;
     processKeypoints(kp_in_);
     processCameraIntrinsics(K_);
@@ -69,7 +70,7 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3d> &points_3d
     int n_ =    (int)points_3d_.size(); 
     int m_  =   (int)point_cloud_.size();
 
-    pts_3d_ = std::make_shared<std::vector<Vec3d> >();
+    indices_3d_pts_ = std::make_shared<std::vector<int> >();
 
     int new_pts_counter_ = 0 ;        
 
@@ -110,12 +111,13 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3d> &points_3d
 
         if(found_) {
 
-            pts_3d_->push_back(point_cloud_[idx_]);
+            indices_3d_pts_->push_back(idx_);
 
         }else{
             
             View::point_cloud_.push_back(curr_pt_);
-            pts_3d_->push_back(curr_pt_);
+            int idx_ = (int)View::point_cloud_.size();
+            indices_3d_pts_->push_back(idx_ - 1);
             new_pts_counter_++;
 
         }

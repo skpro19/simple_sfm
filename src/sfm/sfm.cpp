@@ -21,9 +21,8 @@ void simple_sfm::SimpleSFM::runBundleAdjust(){
     ceres::Problem::Options problem_options;
     ceres::Problem problem(problem_options);
         
+    int n_ = 10; 
 
-    int n_ = (int)views_.size(); 
-    
     int unused_cnt_ = 0 ;
 
     std::cout << "n_: " << n_ << std::endl;
@@ -38,23 +37,25 @@ void simple_sfm::SimpleSFM::runBundleAdjust(){
         
         std::shared_ptr<View> view_(views_[i]);
         
-        assert(view_->pts_2d_->size() == view_->pts_3d_->size());
+        assert(view_->pts_2d_->size() == view_->indices_3d_pts_->size());
 
         int m_ = (int)view_->pts_2d_->size();
 
         Mat3d intrinsics_ = view_->cam_intrinsics_;
         Vec6d &extrinsics_ = view_->cam_extrinsics_;
-        
+
+        std::cout << "index: " << i << std::endl;
+        std::cout << "extrinsics_: " << extrinsics_ << std::endl;
         for(int j = 0 ; j < m_; j++) {
             
             float x_= view_->pts_2d_->at(j)[0];
             float y_= view_->pts_2d_->at(j)[1];
 
-            Vec3d &pt_ = view_->pts_3d_->at(j);
+            Vec3d &pt_ = View::point_cloud_[view_->indices_3d_pts_->at(j)];
             
             ceres::CostFunction* cost_function = ReprojectionError::create(x_, y_, intrinsics_);
             
-            //problem.AddResidualBlock(cost_function, NULL, &extrinsics_(0), &pt_(0));
+            problem.AddResidualBlock(cost_function, NULL, &extrinsics_(0), &pt_(0));
 
         }
     }
@@ -70,6 +71,20 @@ void simple_sfm::SimpleSFM::runBundleAdjust(){
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
     std::cout << summary.BriefReport() << std::endl;
+
+    std::cout << "After BA" << std::endl;
+
+    for(int i = 0; i < n_; i++) {
+
+        if(views_[i] == nullptr) {continue;}
+        std::shared_ptr<View> view_(views_[i]);
+
+        //if(view_)
+        
+        std::cout << "index: " << i << std::endl;
+        std::cout << "extrinsics_: " << view_->cam_extrinsics_ << std::endl;
+    }
+
 
 }
 
@@ -164,7 +179,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
     views_.resize(sz_);
 
-    for(int i = 1 ; i < 50; i++) {
+    for(int i = 1 ; i < 10; i++) {
 
         std::cout << "i: " << i << std::endl;
     
@@ -251,7 +266,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
      
         //  =============== extract inlier kps from E_mask_  =======================
 
-        std::vector<cv::Point2f> kp_1f_in_, kp_2f_in_; //inlier kps_
+        std::vector<cv::Point2d> kp_1f_in_, kp_2f_in_; //inlier kps_
         std::vector<int> v_(E_mask_);
 
         int mask_sum_ = std::accumulate(v_.begin(), v_.end(), 0);
@@ -292,21 +307,20 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         cv::triangulatePoints(P_k_, P_k_minus_1_, kp_1f_in_, kp_2f_in_, pts_4d_);
         
-        std::cout << "kp_1f_in_.size(): " << (int)kp_1f_in_.size() << std::endl;
+        std::cout << "kp_1f_in_.size(): " << (int)kp_2f_in_.size() << std::endl;
        
         std::vector<cv::Point3d> pts_3d_;
         
         convertPointsFromHomogeneous_(pts_4d_, pts_3d_);
         
-        assert((int)pts_3d_.size() == (int)pts_4d_.size().height);
+        assert((int)pts_3d_.size() == (int)kp_2f_in_.size());
         
         // * ======================= VIEW PROCESSING  ===========================
-
-            
-            std::shared_ptr<View> view_ = std::make_shared<View>();
-            
-            view_->updateView(kp_2f, pts_3d_, K_, C_k_);
-            views_[i] = view_;
+    
+        std::shared_ptr<View> view_ = std::make_shared<View>();
+        
+        view_->updateView(kp_2f_in_, pts_3d_, K_, C_k_);
+        views_[i] = view_;
 
         // * ===================================================================
 
