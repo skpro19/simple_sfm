@@ -38,7 +38,7 @@ void simple_sfm::Vis::updatePredictedPose(const cv::Mat &pose_)
 
     cv::circle(Vis::pred_mat_, p_ ,1, cv::viz::Color::green(), 2);
     cv::imshow("pred_", Vis::pred_mat_);
-    //cv::waitKey(10);
+    cv::waitKey(1000);
 
 } 
 

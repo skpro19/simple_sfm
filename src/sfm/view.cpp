@@ -38,30 +38,28 @@ void simple_sfm::View::processKeypoints(const std::vector<cv::Point2d> &kps_){
 }
 
 void simple_sfm::View::processCameraIntrinsics(const cv::Matx33d &in_){
-
-    //cam_intrinsics_ = std::make_shared<Mat3f>(); 
-    cam_intrinsics_ << in_(0,0), in_(0,1), in_(0,2),
-            in_(1,0), in_(1,1), in_(1,2),
-            in_(2,0), in_(2,1), in_(2,2);
-
+    
+    cv::cv2eigen(in_, cam_intrinsics_);
 
 }
 
 void simple_sfm::View::processCameraExtrinsics(const cv::Mat &mat_){
 
     assert(mat_.size() == cv::Size(4,4));
-//    // std::cout << "processCameraExtrinsics function!" << std::endl;
     
     Mat4d ex_;
     cv::cv2eigen(mat_, ex_);
+    
+    //std::cout << "processCameraExtrinsics!" << std::endl;
+    //std::cout << "ex_: " << ex_ << std::endl;
 
-    Vec6d cam_extrinsics_;
     Mat3d R = ex_.block<3, 3>(0, 0).cast<double>();
 
     ceres::RotationMatrixToAngleAxis(&R(0, 0), &cam_extrinsics_(0));        
 
     cam_extrinsics_.tail<3>() = ex_.cast<double>().block<3, 1>(0, 3);
     
+    //std::cout << "cam_extrinsics_: " << cam_extrinsics_ << std::endl;
 }
 
 //TODO --> Tune norm + check what does norm mean    
@@ -94,7 +92,7 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3d> &points_3d
 
             double norm_ = diff_.norm();
             
-            if(norm_ < 0.1) {
+            if(norm_ < 1) {
                 
                 if(norm_ < mn_dis_) {
 

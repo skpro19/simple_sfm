@@ -21,12 +21,13 @@ void simple_sfm::SimpleSFM::runBundleAdjust(){
     ceres::Problem::Options problem_options;
     ceres::Problem problem(problem_options);
         
-    int n_ = 10; 
+    int n_ = (int)views_.size(); 
+
+    n_ = 20;
 
     int unused_cnt_ = 0 ;
 
-    std::cout << "n_: " << n_ << std::endl;
-
+    
     for(int i = 0 ; i < n_; i++){
         
         if(views_[i] == nullptr){
@@ -46,6 +47,7 @@ void simple_sfm::SimpleSFM::runBundleAdjust(){
 
         std::cout << "index: " << i << std::endl;
         std::cout << "extrinsics_: " << extrinsics_ << std::endl;
+        
         for(int j = 0 ; j < m_; j++) {
             
             float x_= view_->pts_2d_->at(j)[0];
@@ -72,7 +74,7 @@ void simple_sfm::SimpleSFM::runBundleAdjust(){
     ceres::Solve(options, &problem, &summary);
     std::cout << summary.BriefReport() << std::endl;
 
-    std::cout << "After BA" << std::endl;
+    //std::cout << "After BA" << std::endl;
 
     for(int i = 0; i < n_; i++) {
 
@@ -184,7 +186,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
     ceres::Problem problem(problem_options);
     
 
-    for(int i = 1 ; i < 10; i++) {
+    for(int i = 1 ; i < 20; i++) {
 
         std::cout << "i: " << i << std::endl;
     
@@ -351,6 +353,6 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
     //std::cout << "pt_3d_cld_.size(): " << (int)pt_cld__3d_.size() << std::endl;
 
-    //runBundleAdjust();  
+    runBundleAdjust();  
 }
 
