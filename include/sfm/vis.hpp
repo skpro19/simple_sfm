@@ -25,8 +25,8 @@ namespace simple_sfm {
 
 
             static void updateGroundPose(const cv::Matx34d &pose_); 
-            static void updatePredictedPose(const cv::Matx34d &pose_);
             static void updatePredictedPose(const cv::Mat &pose_);
+            static void updateBAPose(const cv::Mat &pose_);
 
 
         private:

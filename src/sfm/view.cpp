@@ -92,7 +92,7 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3d> &points_3d
 
             double norm_ = diff_.norm();
             
-            if(norm_ < 1) {
+            if(norm_ < 0.1) {
                 
                 if(norm_ < mn_dis_) {
 
@@ -106,7 +106,7 @@ void simple_sfm::View::process3dPoints(const std::vector<cv::Point3d> &points_3d
             }
 
         }  
-
+    
         if(found_) {
 
             indices_3d_pts_->push_back(idx_);

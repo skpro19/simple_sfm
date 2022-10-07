@@ -2,6 +2,8 @@
 
 #include <opencv2/calib3d.hpp>
 
+#include <opencv2/viz/types.hpp>
+
 //#include <pcl/visualization/cloud_viewer.h>
 
 simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_) 
@@ -16,19 +18,23 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 
 }
 
-void simple_sfm::SimpleSFM::runBundleAdjust(){
+void simple_sfm::SimpleSFM::runBundleAdjust(int se_, int en_){
+
+    std::cout << "Inside runBundleAdjustment function!" << std::endl;
+
+    std::cout << "se: " << se_ << " en_: " << en_ << std::endl;
 
     ceres::Problem::Options problem_options;
     ceres::Problem problem(problem_options);
         
-    int n_ = (int)views_.size(); 
+    //int n_ = (int)views_.size(); 
 
-    n_ = 20;
+    //n_ = 20;
 
     int unused_cnt_ = 0 ;
 
     
-    for(int i = 0 ; i < n_; i++){
+    for(int i = 1 ; i <= en_; i++){
         
         if(views_[i] == nullptr){
 
@@ -45,8 +51,8 @@ void simple_sfm::SimpleSFM::runBundleAdjust(){
         Mat3d intrinsics_ = view_->cam_intrinsics_;
         Vec6d &extrinsics_ = view_->cam_extrinsics_;
 
-        std::cout << "index: " << i << std::endl;
-        std::cout << "extrinsics_: " << extrinsics_ << std::endl;
+        //std::cout << "index: " << i << std::endl;
+        //std::cout << "extrinsics_: " << extrinsics_ << std::endl;
         
         for(int j = 0 ; j < m_; j++) {
             
@@ -76,18 +82,15 @@ void simple_sfm::SimpleSFM::runBundleAdjust(){
 
     //std::cout << "After BA" << std::endl;
 
-    for(int i = 0; i < n_; i++) {
+    for(int i = se_; i <= en_; i++) {
 
         if(views_[i] == nullptr) {continue;}
         std::shared_ptr<View> view_(views_[i]);
 
         cv::Matx44d ext_mat_ = unpackCameraExtrinsics(view_->cam_extrinsics_);
-        Vis::updatePredictedPose(cv::Mat(ext_mat_));
+        Vis::updateBAPose(cv::Mat(ext_mat_));
         
-        std::cout << "index: " << i << std::endl;
-        std::cout << "extrinsics_: " << view_->cam_extrinsics_ << std::endl;
-
-
+        
     }
 }
 
@@ -149,8 +152,41 @@ void simple_sfm::SimpleSFM::update3DCloud(const std::vector<cv::Point3f> &pts_)
 
 }
 
+void simple_sfm::SimpleSFM::extractInliers( const std::vector<cv::Point2d> &kp_1f, 
+                                            const std::vector<cv::Point2d> &kp_2f,
+                                            std::vector<cv::Point2d> &kp_1f_in_, 
+                                            std::vector<cv::Point2d> kp_2f_in_,  
+                                            const cv::Mat &E_mask_){
+
+    std::vector<int> v_(E_mask_);
+
+    int mask_sum_ = std::accumulate(v_.begin(), v_.end(), 0);
+    
+    int v_sz_ = (int)v_.size() ; 
+
+    assert(v_sz_ == E_mask_.size().height);
+    assert((int)kp_1f_in_.size() == 0 && (int)kp_2f_in_.size() == 0);
+
+    for(int vi = 0 ; vi < v_sz_ ; vi++) {
+
+        int mask_ = v_[vi]; 
+
+        if(mask_) {
+
+            kp_1f_in_.push_back(kp_1f[vi]);
+            kp_2f_in_.push_back(kp_2f[vi]);
+        }
+
+    }
+
+    assert((int)kp_1f_in_.size() == mask_sum_);
+
+}
+       
+
 void simple_sfm::SimpleSFM::runVOPipeline(){
 
+    
     cv::Mat E_, R, t;
     cv::Mat R_f, t_f;
 
@@ -185,8 +221,10 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
     ceres::Problem::Options problem_options;
     ceres::Problem problem(problem_options);
     
+    int ba_se_ = 1; 
+    int ba_en_;
 
-    for(int i = 1 ; i < 20; i++) {
+    for(int i = 1 ; i < sz_; i++) {
 
         std::cout << "i: " << i << std::endl;
     
@@ -246,7 +284,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         double del_x_ = std::fabs(t.at<double>(0,0));
         
         
-        if(inlier_cnt_ < 25) {continue;}
+        if(inlier_cnt_ < 100) {continue;}
 
         bool duplicate_flag_ = checkForDuplicates(kp_1f, kp_2f);
 
@@ -272,31 +310,11 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         C_k_ =  C_k_minus_1_ * T_k_;
      
         //  =============== extract inlier kps from E_mask_  =======================
-
         std::vector<cv::Point2d> kp_1f_in_, kp_2f_in_; //inlier kps_
-        std::vector<int> v_(E_mask_);
-
-        int mask_sum_ = std::accumulate(v_.begin(), v_.end(), 0);
+        extractInliers(kp_1f, kp_2f, kp_1f_in_, kp_2f_in_, E_mask_);
         
-        int v_sz_ = (int)v_.size() ; 
 
-        assert(v_sz_ == E_mask_.size().height);
-        assert((int)kp_1f_in_.size() == 0 && (int)kp_2f_in_.size() == 0);
-    
-        for(int vi = 0 ; vi < v_sz_ ; vi++) {
-
-            int mask_ = v_[vi]; 
-
-            if(mask_) {
-
-                kp_1f_in_.push_back(kp_1f[vi]);
-                kp_2f_in_.push_back(kp_2f[vi]);
-            }
-
-        }
-
-        assert((int)kp_1f_in_.size() == mask_sum_);
-
+        
         //  ================================================================================
 
         //  ====================    Triangulating 3d points from 2d  ======================
@@ -314,8 +332,6 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         cv::triangulatePoints(P_k_, P_k_minus_1_, kp_1f_in_, kp_2f_in_, pts_4d_);
         
-        //std::cout << "kp_1f_in_.size(): " << (int)kp_2f_in_.size() << std::endl;
-       
         std::vector<cv::Point3d> pts_3d_;
         
         convertPointsFromHomogeneous_(pts_4d_, pts_3d_);
@@ -330,7 +346,13 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         views_[i] = view_;
 
         // * ===================================================================
+        
 
+
+    
+
+
+        
             
         
         //  ==================================================================================
@@ -338,21 +360,33 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         C_k_minus_1_ = C_k_;
         last_idx_ = i;
 
-        std::cout <<  i << "--->[x y z]: " << "(" <<C_k_.at<double>(0, 3) << "," << C_k_.at<double>(1, 3) << "," << C_k_.at<double>(2,3) << ")" << std::endl; 
+        //std::cout <<  i << "--->[x y z]: " << "(" <<C_k_.at<double>(0, 3) << "," << C_k_.at<double>(1, 3) << "," << C_k_.at<double>(2,3) << ")" << std::endl; 
         
-        
+        if(i % 20 == 0) {
 
-        //cv::imshow("img_1" , img_1);
+            //std::cout << "Runnning bundle adjustment!" << std::endl;
+            
+            ba_en_ = ba_se_ + 19;
+            runBundleAdjust(ba_se_, ba_en_);
+            std::cout << "ba_se_: " << ba_se_ << " ba_en_: " << ba_en_ << std::endl;
+            
+            ba_se_ += (i + 1);
+            //std::cout << "Hello!" << std::endl;
+        }
+
+        //cv::imshow("img_1" , img_1); 50+ inch
         //Vis::drawKeyPoints(img_1, kp_1f, kp_2f);
 
         //Vis::updateGroundPose(cv::Mat(gt_poses_[i]));
-        //Vis::updatePredictedPose(C_k_);
+       // Vis::updatePredictedPose(C_k_);
+        std::cout << "pt_cld_size: " << View::point_cloud_.size() << std::endl;
 
         cv::waitKey(10);
     }
-
+    
+    
     //std::cout << "pt_3d_cld_.size(): " << (int)pt_cld__3d_.size() << std::endl;
 
-    runBundleAdjust();  
+    //runBundleAdjust();  
 }
 
