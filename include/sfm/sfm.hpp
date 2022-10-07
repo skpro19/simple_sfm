@@ -41,10 +41,17 @@ namespace simple_sfm{
 
             void runVOPipeline();
 
-            void runBundleAdjust();
+            void runBundleAdjust(int se_, int en_);
            // bool checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_) const;
 
             void update3DCloud(const std::vector<cv::Point3f> &pts_);
+            
+            void extractInliers( const std::vector<cv::Point2d> &kp_1f, 
+                                            const std::vector<cv::Point2d> &kp_2f,
+                                            std::vector<cv::Point2d> &kp_1f_in_, 
+                                            std::vector<cv::Point2d> kp_2f_in_,  
+                                            const cv::Mat &E_mask_);
+
 
            
         private:

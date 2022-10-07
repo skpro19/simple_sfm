@@ -45,9 +45,8 @@ namespace simple_sfm{
             int used_ = -1;
             std::shared_ptr <std::vector<Vec2d> >pts_2d_;
             Mat3d cam_intrinsics_;
-            //Mat34f cam_extrinsics_;
-            
             Vec6d cam_extrinsics_;
+                
             std::shared_ptr<std::vector<int> >indices_3d_pts_;
             
             inline static std::vector<Vec3d>  point_cloud_;
