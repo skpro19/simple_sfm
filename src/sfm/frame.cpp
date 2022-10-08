@@ -106,5 +106,44 @@ void simple_sfm::Frame::extractAndMatchFeatures(const cv::Mat &img_1, const cv::
 
     //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
     //std::cout << "kp_1_matched.size(): " << (int)kp_1_matched.size() << std::endl;
-        
+      
 }
+
+void simple_sfm::Frame::keypointsToPoints(const KeyPoints &keypoints_, Points2d &points_){
+
+    for(const auto &kp_: keypoints_) {
+
+        points_.push_back(kp_.pt);
+
+    }
+
+    assert(points_.size() == keypoints_.size());
+
+}
+
+
+void simple_sfm::Frame::extractFeaturesAndDescriptors(const cv::Mat &img_1, KeyPoints &keypoints_, cv::Mat &descriptors_){
+    
+    //kp_1_matched.clear(); 
+    //kp_2_matched.clear();
+
+    keypoints_.clear();
+    keypoints_.resize(0);
+
+    cv::Mat image_one;
+    cv::cvtColor(img_1, image_one, cv::COLOR_BGR2GRAY);
+    
+    cv::Mat mask = cv::Mat();
+    
+    cv::Ptr<cv::ORB>orb_ = cv::ORB::create(5000);
+
+    orb_->detectAndCompute(image_one, mask, keypoints_, descriptors_);
+        
+    descriptors_.convertTo(descriptors_, 0);
+    
+
+
+}
+
+
+

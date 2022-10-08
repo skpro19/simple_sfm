@@ -18,6 +18,52 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 
 }
 
+void simple_sfm::SimpleSFM::createFeatureMatrix(){
+
+    int num_frames_ = frame_list_.size();
+
+    mFeatures_.resize(num_frames_);
+
+
+    for(int i = 0 ;i < num_frames_; i++) {
+
+        cv::Mat img_ = cv::imread(frame_list_[i].c_str());
+        
+        Features features_;
+        Frame::extractFeaturesAndDescriptors(img_, features_.keypoints, features_.descriptors);
+        Frame::keypointsToPoints(features_.keypoints, features_.points);        
+        mFeatures_[i] = features_;
+    
+    }
+
+
+}
+
+
+
+void simple_sfm::SimpleSFM::runSFMPipeline() {
+
+    createFeatureMatrix();
+
+    std::cout << "Finished createFeatureMatrix function!" << std::endl;
+
+
+    /*
+
+
+        createFeatureMatchMatrix();
+        initializeBaselineSFM();
+        addViewToSFM();    
+
+
+    */
+    
+
+
+}
+
+
+
 void simple_sfm::SimpleSFM::runBundleAdjust(int se_, int en_){
 
     std::cout << "Inside runBundleAdjustment function!" << std::endl;
@@ -183,12 +229,6 @@ void simple_sfm::SimpleSFM::extractInliers( const std::vector<cv::Point2d> &kp_1
 
 }
        
-bool simple_sfm::SimpleSFM::triangulatePoints(){
-
-    
-
-
-}
 
 void simple_sfm::SimpleSFM::runVOPipeline(){
 

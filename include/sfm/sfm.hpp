@@ -18,11 +18,18 @@
 #include <opencv2/core/eigen.hpp>
 
 
-
 namespace simple_sfm{
 
     
-    class View;
+    struct Features{
+        
+        KeyPoints keypoints;
+        Points2d  points;
+        cv::Mat   descriptors;  
+
+    };
+
+
 
     class SimpleSFM{
 
@@ -46,15 +53,22 @@ namespace simple_sfm{
 
             void update3DCloud(const std::vector<cv::Point3f> &pts_);
             
+            void createFeatureMatrix();
+            
             void extractInliers( const std::vector<cv::Point2d> &kp_1f, 
                                             const std::vector<cv::Point2d> &kp_2f,
                                             std::vector<cv::Point2d> &kp_1f_in_, 
                                             std::vector<cv::Point2d> kp_2f_in_,  
                                             const cv::Mat &E_mask_);
 
+            
+
 
            
         private:
+
+            std::vector<Features> mFeatures_;
+
 
             
             std::shared_ptr<SFM_IO>                     io_;
