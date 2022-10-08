@@ -28,9 +28,12 @@ namespace simple_sfm{
             static inline std::vector<cv::KeyPoint> kp_1, kp_2;
             static inline std::vector<cv::KeyPoint> kp_1_matched, kp_2_matched; 
             
-            static void extractFeaturesAndDescriptors(const cv::Mat &img_1, KeyPoints &keypoints_, cv::Mat &descriptors_);
             
-            static void keypointsToPoints(const KeyPoints &keypoints_, Points2d &points_);
+            
+
+            static void extractFeaturesAndDescriptors(const cv::Mat &img_, Features &features_);
+            static void keypointsToPoints(Features &f_);
+            static Matches getMatches(const Features &f1_, const Features &f2_);
 
 
         private:

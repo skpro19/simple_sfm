@@ -23,49 +23,26 @@ double simple_sfm::Frame::getScale(const cv::Mat &prev_poses_, const cv::Mat &cu
     return scale_;
 }
 
-void simple_sfm::Frame::extractAndMatchFeatures(const cv::Mat &img_1, const cv::Mat &img_2){
-    
-    kp_1_matched.clear(); 
-    kp_2_matched.clear();
 
-    cv::Mat image_one, image_two;
-    cv::cvtColor(img_1, image_one, cv::COLOR_BGR2GRAY);
-    cv::cvtColor(img_2, image_two, cv::COLOR_BGR2GRAY);
-    
-    cv::Mat mask = cv::Mat();
-    cv::Mat des_1, des_2;
-    
-    cv::Ptr<cv::ORB>orb_ = cv::ORB::create(5000);
+Matches simple_sfm::Frame::getMatches(const Features &f1_, const Features &f2_){
 
-
-    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
-    
-    //*** extracting descriptors from keypoints
-    orb_->detectAndCompute(image_one, mask, kp_1, des_1);
-    orb_->detectAndCompute(image_two, mask, kp_2, des_2);
-    
-    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
-        
-    des_1.convertTo(des_1, 0);
-    des_2.convertTo(des_2, 0);
-    
     cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
 
     std::vector<cv::DMatch> brute_hamming_matches;
-    matcher->match(des_1, des_2, brute_hamming_matches);
+    matcher->match(f1_.descriptors, f2_.descriptors, brute_hamming_matches);
 
     double min_dist=10000, max_dist=0;
 
-    for ( int i = 0; i < des_1. rows; i++ )
+    for ( int i = 0; i < f1_.descriptors. rows; i++ )
     {
         double dist = brute_hamming_matches[i].distance;
         if ( dist < min_dist ) min_dist = dist;
         if ( dist > max_dist ) max_dist = dist;
     }
 
-    std::vector<cv::DMatch> good_matches;
+    Matches good_matches;
     
-    for ( int i = 0; i < des_1.rows; i++ )
+    for ( int i = 0; i < f1_.descriptors.rows; i++ )
     {
         if ( brute_hamming_matches[i].distance <= std::max( 2*min_dist, 20.0 ) )
         {
@@ -73,75 +50,41 @@ void simple_sfm::Frame::extractAndMatchFeatures(const cv::Mat &img_1, const cv::
         }
     }
 
-    //pruning good matches for duplicate kps
-    sort(good_matches.begin(), good_matches.end(), [](const cv::DMatch &a_, const cv::DMatch &b_){
-
-        return a_.distance < b_.distance;
-
-    });
-
-    int n_ = (int)good_matches.size(); 
-
-    std::set<std::pair<float, float> > sa_, sb_; 
-    
-    for(int i = 0 ; i < n_ ; i++){
-
-        cv::DMatch match = good_matches[i]; 
-        
-        std::pair<float, float> pa_, pb_; 
-        
-        int qi_ = match.queryIdx, ti_ = match.trainIdx;
-
-        pa_ = {kp_1[qi_].pt.x, kp_1[qi_].pt.y},  pb_ = {kp_2[ti_].pt.x, kp_2[ti_].pt.y}; 
-        
-        if(sa_.count(pa_) > 0 || sb_.count(pb_) > 0) {continue;}
-
-        sa_.insert(pa_);
-        sb_.insert(pb_);
-    
-        kp_1_matched.push_back(kp_1[qi_]);
-        kp_2_matched.push_back(kp_2[ti_]);
-        
-    }
-
-    //std::cout << "kp_1.size(): " << (int)kp_1.size() << std::endl;
-    //std::cout << "kp_1_matched.size(): " << (int)kp_1_matched.size() << std::endl;
-      
-}
-
-void simple_sfm::Frame::keypointsToPoints(const KeyPoints &keypoints_, Points2d &points_){
-
-    for(const auto &kp_: keypoints_) {
-
-        points_.push_back(kp_.pt);
-
-    }
-
-    assert(points_.size() == keypoints_.size());
+    return good_matches;
 
 }
 
 
-void simple_sfm::Frame::extractFeaturesAndDescriptors(const cv::Mat &img_1, KeyPoints &keypoints_, cv::Mat &descriptors_){
+void simple_sfm::Frame::keypointsToPoints(Features &f_){
+
+    f_.keypoints.resize(0);
+
+    for(const auto &kp_: f_.keypoints) {
+
+        f_.points.push_back(kp_.pt);
+    }
+
+    assert(f_.keypoints.size() == f_.points.size());
+
+}
+
+
+void simple_sfm::Frame::extractFeaturesAndDescriptors(const cv::Mat &img_, Features &features_){
     
-    //kp_1_matched.clear(); 
-    //kp_2_matched.clear();
+    features_.descriptors.resize(0);
+    features_.keypoints.resize(0);
+    features_.points.resize(0);
 
-    keypoints_.clear();
-    keypoints_.resize(0);
-
-    cv::Mat image_one;
-    cv::cvtColor(img_1, image_one, cv::COLOR_BGR2GRAY);
+    cv::Mat image_;
+    cv::cvtColor(img_, image_, cv::COLOR_BGR2GRAY);
     
     cv::Mat mask = cv::Mat();
     
     cv::Ptr<cv::ORB>orb_ = cv::ORB::create(5000);
 
-    orb_->detectAndCompute(image_one, mask, keypoints_, descriptors_);
+    orb_->detectAndCompute(image_, mask, features_.keypoints, features_.descriptors);
         
-    descriptors_.convertTo(descriptors_, 0);
-    
-
+    features_.descriptors.convertTo(features_.descriptors, 0);
 
 }
 

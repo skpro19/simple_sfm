@@ -4,8 +4,6 @@
 
 #include <opencv2/viz/types.hpp>
 
-//#include <pcl/visualization/cloud_viewer.h>
-
 simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_) 
 {
 
@@ -17,6 +15,7 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
     //ceres::Problem problem(problem_options_);
 
 }
+
 
 void simple_sfm::SimpleSFM::createFeatureMatrix(){
 
@@ -30,8 +29,8 @@ void simple_sfm::SimpleSFM::createFeatureMatrix(){
         cv::Mat img_ = cv::imread(frame_list_[i].c_str());
         
         Features features_;
-        Frame::extractFeaturesAndDescriptors(img_, features_.keypoints, features_.descriptors);
-        Frame::keypointsToPoints(features_.keypoints, features_.points);        
+        Frame::extractFeaturesAndDescriptors(img_, features_);
+        Frame::keypointsToPoints(features_);        
         mFeatures_[i] = features_;
     
     }
@@ -39,19 +38,36 @@ void simple_sfm::SimpleSFM::createFeatureMatrix(){
 
 }
 
+void simple_sfm::SimpleSFM::createFeatureMatchMatrix(){
 
+    int n_ = frame_list_.size(); 
+
+    mMFeatureMatches_.resize(n_);
+
+    for(int i = 0 ; i < n_ ; i++) {
+
+        for(int j = i + 1; i < n_ ; i++) {
+
+            Matches matches_ = Frame::getMatches(mFeatures_[i], mFeatures_[j]);
+
+            mMFeatureMatches_[i].push_back(matches_);
+
+        }
+
+    }
+
+}
 
 void simple_sfm::SimpleSFM::runSFMPipeline() {
 
     createFeatureMatrix();
+    createFeatureMatchMatrix();
 
-    std::cout << "Finished createFeatureMatrix function!" << std::endl;
-
+    
 
     /*
 
 
-        createFeatureMatchMatrix();
         initializeBaselineSFM();
         addViewToSFM();    
 

@@ -29,6 +29,8 @@ namespace simple_sfm{
 
     };
 
+    
+
 
 
     class SimpleSFM{
@@ -53,7 +55,6 @@ namespace simple_sfm{
 
             void update3DCloud(const std::vector<cv::Point3f> &pts_);
             
-            void createFeatureMatrix();
             
             void extractInliers( const std::vector<cv::Point2d> &kp_1f, 
                                             const std::vector<cv::Point2d> &kp_2f,
@@ -61,6 +62,8 @@ namespace simple_sfm{
                                             std::vector<cv::Point2d> kp_2f_in_,  
                                             const cv::Mat &E_mask_);
 
+            void createFeatureMatrix();
+            void createFeatureMatchMatrix();
             
 
 
@@ -68,6 +71,7 @@ namespace simple_sfm{
         private:
 
             std::vector<Features> mFeatures_;
+            std::vector<std::vector<Matches> > mMFeatureMatches_;
 
 
             
