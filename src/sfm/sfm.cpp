@@ -183,6 +183,12 @@ void simple_sfm::SimpleSFM::extractInliers( const std::vector<cv::Point2d> &kp_1
 
 }
        
+bool simple_sfm::SimpleSFM::triangulatePoints(){
+
+    
+
+
+}
 
 void simple_sfm::SimpleSFM::runVOPipeline(){
 
@@ -264,7 +270,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         
         if(!dup_kp_flag_) {continue;}
 
-        //===============================================
+        //===============================================       
 
         cv::Mat E_mask_;
         E_mask_.convertTo(E_mask_, CV_64F);
@@ -309,15 +315,12 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
 
         C_k_ =  C_k_minus_1_ * T_k_;
      
-        //  =============== extract inlier kps from E_mask_  =======================
+        //*     =====================   Inliers extraction  =======================
+       
         std::vector<cv::Point2d> kp_1f_in_, kp_2f_in_; //inlier kps_
         extractInliers(kp_1f, kp_2f, kp_1f_in_, kp_2f_in_, E_mask_);
         
-
-        
-        //  ================================================================================
-
-        //  ====================    Triangulating 3d points from 2d  ======================
+        //*     ====================    Triangulation        ======================
         
         cv::Matx34f P_k_, P_k_minus_1_;
         cv::Matx34f c_k_, c_k_minus_1_; 
@@ -345,7 +348,7 @@ void simple_sfm::SimpleSFM::runVOPipeline(){
         view_->updateView(kp_2f_in_, pts_3d_, K_, C_k_);
         views_[i] = view_;
 
-        // * ===================================================================
+        // ===================================================================
         
 
 
