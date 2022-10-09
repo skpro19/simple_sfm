@@ -11,6 +11,42 @@ simple_sfm::Frame::Frame() {
 
 }
 
+int simple_sfm::Frame::getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_){
+
+    Features f1_mat_, f2_mat_;
+    f1_mat_.keypoints.resize(0); 
+    f2_mat_.keypoints.resize(0); 
+
+
+    for(int i = 0 ;i  < (int)matches_.size(); i++) {
+
+        f1_mat_.keypoints.push_back(f1_.keypoints[matches_[i].queryIdx]);
+        f2_mat_.keypoints.push_back(f2_.keypoints[matches_[i].trainIdx]);
+
+    }
+
+    Frame::keypointsToPoints(f1_mat_);
+    Frame::keypointsToPoints(f2_mat_);
+
+    assert(f1_mat_.keypoints.size()  == matches_.size());
+
+    cv::Mat inlier_mask_, H_;
+    H_ = cv::findHomography(f1_mat_.points, f2_mat_.points, inlier_mask_, cv::RANSAC);
+
+    int inlier_cnt_ =  cv::countNonZero(inlier_mask_);
+
+    if(H_.empty()) {
+        
+        std::cout << "H_ is empty!" << std::endl;
+        inlier_cnt_ = 0 ;
+    
+    }
+
+    return inlier_cnt_;
+
+}
+
+
 
 double simple_sfm::Frame::getScale(const cv::Mat &prev_poses_, const cv::Mat &curr_poses_) {
 

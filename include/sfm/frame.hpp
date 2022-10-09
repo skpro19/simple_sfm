@@ -35,7 +35,7 @@ namespace simple_sfm{
             static void keypointsToPoints(Features &f_);
             static Matches getMatches(const Features &f1_, const Features &f2_);
 
-            
+            static int getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_);
 
 
         private:

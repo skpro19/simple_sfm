@@ -19,7 +19,7 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 
 void simple_sfm::SimpleSFM::createFeatureMatrix(){
 
-    int num_frames_ = frame_list_.size();
+    int num_frames_ = mFrames_.size();
 
     mFeatures_.resize(num_frames_);
 
@@ -39,7 +39,7 @@ void simple_sfm::SimpleSFM::createFeatureMatrix(){
 
 void simple_sfm::SimpleSFM::createFeatureMatchMatrix(){
 
-    int n_ = frame_list_.size(); 
+    int n_ = mFrames_.size(); 
 
     mMFeatureMatches_.resize(n_);
 
@@ -56,40 +56,6 @@ void simple_sfm::SimpleSFM::createFeatureMatchMatrix(){
 }
 
 
-int simple_sfm::SimpleSFM::getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_){
-
-    Features f1_mat_, f2_mat_;
-    f1_mat_.keypoints.resize(0); 
-    f2_mat_.keypoints.resize(0); 
-
-
-    for(int i = 0 ;i  < (int)matches_.size(); i++) {
-
-        f1_mat_.keypoints.push_back(f1_.keypoints[matches_[i].queryIdx]);
-        f2_mat_.keypoints.push_back(f2_.keypoints[matches_[i].trainIdx]);
-
-    }
-
-    Frame::keypointsToPoints(f1_mat_);
-    Frame::keypointsToPoints(f2_mat_);
-
-    assert(f1_mat_.keypoints.size()  == matches_.size());
-
-    cv::Mat inlier_mask_, H_;
-    H_ = cv::findHomography(f1_mat_.points, f2_mat_.points, inlier_mask_, cv::RANSAC);
-
-    int inlier_cnt_ =  cv::countNonZero(inlier_mask_);
-
-    if(H_.empty()) {
-        
-        std::cout << "H_ is empty!" << std::endl;
-        inlier_cnt_ = 0 ;
-    
-    }
-
-    return inlier_cnt_;
-
-}
 
 std::map<float, ImagePair> simple_sfm::SimpleSFM::sortViewsByHomography(){
 
@@ -110,7 +76,7 @@ std::map<float, ImagePair> simple_sfm::SimpleSFM::sortViewsByHomography(){
             }
             
             
-            int inliers_cnt_ = getHomographyInliersCount(mFeatures_[i], mFeatures_[j], mMFeatureMatches_[i][j]);
+            int inliers_cnt_ = Frame::getHomographyInliersCount(mFeatures_[i], mFeatures_[j], mMFeatureMatches_[i][j]);
 
             double inlier_ratio_ = 1.0 * (double)inliers_cnt_/ (double)mMFeatureMatches_[i][j].size(); 
 
@@ -124,14 +90,71 @@ std::map<float, ImagePair> simple_sfm::SimpleSFM::sortViewsByHomography(){
 
 }
 
+bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P2_, const ImagePair &img_pair_, Matches &pruned_matches_){
+
+
+    cv::Mat E_, R, t, inlier_mask_;
+
+    const KeyPoints &kp1_ = mFeatures_[img_pair_.first].keypoints;
+    const KeyPoints &kp2_ = mFeatures_[img_pair_.second].keypoints;
+    
+    const Points2d &pts1_ = mFeatures_[img_pair_.first].points;
+    const Points2d &pts2_ = mFeatures_[img_pair_.second].points;
+    
+
+    E_ = cv::findEssentialMat(pts1_, pts2_, K_,cv::RANSAC, 0.999, 1.0, inlier_mask_);
+
+
+    const int inlier_cnt_ = cv::recoverPose(E_, pts1_, pts2_, K_, R, t, inlier_mask_);
+
+    //if(inlier_cnt_ < 25) { return false;}
+
+    P1_ = cv::Matx34d::eye();
+
+    P2_ = cv::Matx34d(R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
+                     R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
+                     R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2));
+
+    pruned_matches_.resize(0);
+
+    const Matches &matches_ = mMFeatureMatches_[img_pair_.first][img_pair_.second];
+    
+    for(int i = 0 ; i < inlier_mask_.rows; i++) {
+
+        if(inlier_mask_.at<uchar>(i)){
+
+            pruned_matches_.push_back(matches_[i]);
+
+        }
+    }
+
+    return true;
+   
+}
+
 void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 
 
+    const std::map<float, ImagePair> homography_ratio_map_  = sortViewsByHomography();
+
+    for(const auto &elem_: homography_ratio_map_){
+
+        const float ratio_ = elem_.first;
+        const ImagePair &img_pair_  = elem_.second;
+
+
+        cv::Matx34d P1_ = cv::Matx34d::eye();
+        cv::Matx34d P2_ = cv::Matx34d::eye();
+        
+        
+
+
+
+    }
 
 
     /*
 
-        - findBestPair()
         - findCameraMatrices()
         - triangulatePoints()
 
@@ -145,6 +168,7 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 void simple_sfm::SimpleSFM::runSFMPipeline() {
 
     createFeatureMatrix();
+
     createFeatureMatchMatrix();
     
 

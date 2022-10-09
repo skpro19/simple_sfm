@@ -66,8 +66,8 @@ namespace simple_sfm{
             void initializeBaselineSFM();
             std::map<float, ImagePair> sortViewsByHomography();
             int getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_);
-            
-           
+            bool findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P2_, const ImagePair &img_pair_, Matches &pruned_matches_);
+
         private:
 
             std::vector<Features>                   mFeatures_;
