@@ -75,18 +75,25 @@ int simple_sfm::SimpleSFM::getHomographyInliersCount(const Features &f1_, const 
 
     assert(f1_mat_.keypoints.size()  == matches_.size());
 
-    cv::Mat inlier_mask_;
-    cv::findHomography(f1_mat_.points, f2_mat_.points, inlier_mask_, cv::RANSAC);
+    cv::Mat inlier_mask_, H_;
+    H_ = cv::findHomography(f1_mat_.points, f2_mat_.points, inlier_mask_, cv::RANSAC);
 
     int inlier_cnt_ =  cv::countNonZero(inlier_mask_);
 
-    return inlier_cnt_;
+    if(H_.empty()) {
+        
+        std::cout << "H_ is empty!" << std::endl;
+        inlier_cnt_ = 0 ;
     
+    }
+
+    return inlier_cnt_;
+
 }
 
 std::map<float, ImagePair> simple_sfm::SimpleSFM::sortViewsByHomography(){
 
-    std::map<float, ImagePair> hom_map_;
+    std::map<float, ImagePair> homography_ratio_map_;
 
     const int n_ = (int)mFrames_.size(); 
 
@@ -98,20 +105,22 @@ std::map<float, ImagePair> simple_sfm::SimpleSFM::sortViewsByHomography(){
 
             if(match_sz_ < MIN_POINT_COUNT_FOR_HOMOGRAPHY) {
 
-                hom_map_[1.0] = ImagePair{i,j};
+                homography_ratio_map_[1.0] = ImagePair{i,j};
                 continue;
             }
             
+            
+            int inliers_cnt_ = getHomographyInliersCount(mFeatures_[i], mFeatures_[j], mMFeatureMatches_[i][j]);
 
+            double inlier_ratio_ = 1.0 * (double)inliers_cnt_/ (double)mMFeatureMatches_[i][j].size(); 
 
-
+            homography_ratio_map_[inlier_ratio_] = ImagePair{i,j};
 
         }
 
     }
 
-
-
+    return homography_ratio_map_;
 
 }
 
