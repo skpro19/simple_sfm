@@ -13,6 +13,9 @@
 using KeyPoints     =       std::vector<cv::KeyPoint>;
 using Points2d      =       std::vector<cv::Point2d>;
 using Matches       =       std::vector<cv::DMatch>;
+using ImagePair     =       std::pair<int, int>;
+
+const int MIN_POINT_COUNT_FOR_HOMOGRAPHY = 100;
 
 
 

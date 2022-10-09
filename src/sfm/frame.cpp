@@ -89,4 +89,3 @@ void simple_sfm::Frame::extractFeaturesAndDescriptors(const cv::Mat &img_, Featu
 }
 
 
-

@@ -35,7 +35,6 @@ void simple_sfm::SimpleSFM::createFeatureMatrix(){
     
     }
 
-
 }
 
 void simple_sfm::SimpleSFM::createFeatureMatchMatrix(){
@@ -53,8 +52,84 @@ void simple_sfm::SimpleSFM::createFeatureMatchMatrix(){
             mMFeatureMatches_[i].push_back(matches_);
 
         }
+    }
+}
+
+
+int simple_sfm::SimpleSFM::getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_){
+
+    Features f1_mat_, f2_mat_;
+    f1_mat_.keypoints.resize(0); 
+    f2_mat_.keypoints.resize(0); 
+
+
+    for(int i = 0 ;i  < (int)matches_.size(); i++) {
+
+        f1_mat_.keypoints.push_back(f1_.keypoints[matches_[i].queryIdx]);
+        f2_mat_.keypoints.push_back(f2_.keypoints[matches_[i].trainIdx]);
 
     }
+
+    Frame::keypointsToPoints(f1_mat_);
+    Frame::keypointsToPoints(f2_mat_);
+
+    assert(f1_mat_.keypoints.size()  == matches_.size());
+
+    cv::Mat inlier_mask_;
+    cv::findHomography(f1_mat_.points, f2_mat_.points, inlier_mask_, cv::RANSAC);
+
+    int inlier_cnt_ =  cv::countNonZero(inlier_mask_);
+
+    return inlier_cnt_;
+    
+}
+
+std::map<float, ImagePair> simple_sfm::SimpleSFM::sortViewsByHomography(){
+
+    std::map<float, ImagePair> hom_map_;
+
+    const int n_ = (int)mFrames_.size(); 
+
+    for(int i = 0 ; i < n_ ; i++) {
+
+        for(int j = i + 1; j < n_; j++) {
+
+            int match_sz_ = (int)mMFeatureMatches_[i][j].size();
+
+            if(match_sz_ < MIN_POINT_COUNT_FOR_HOMOGRAPHY) {
+
+                hom_map_[1.0] = ImagePair{i,j};
+                continue;
+            }
+            
+
+
+
+
+        }
+
+    }
+
+
+
+
+}
+
+void simple_sfm::SimpleSFM::initializeBaselineSFM(){
+
+
+
+
+    /*
+
+        - findBestPair()
+        - findCameraMatrices()
+        - triangulatePoints()
+
+    */
+
+
+
 
 }
 
@@ -62,6 +137,8 @@ void simple_sfm::SimpleSFM::runSFMPipeline() {
 
     createFeatureMatrix();
     createFeatureMatchMatrix();
+    
+
 
     
 

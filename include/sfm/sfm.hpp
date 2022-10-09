@@ -43,7 +43,6 @@ namespace simple_sfm{
             void updateIOParams();
             
 
-            void initializeSFMPipeline();
             void runSFMPipeline();
             void addNextFrame(int frame_idx_);
 
@@ -64,21 +63,22 @@ namespace simple_sfm{
 
             void createFeatureMatrix();
             void createFeatureMatchMatrix();
+            void initializeBaselineSFM();
+            std::map<float, ImagePair> sortViewsByHomography();
+            int getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_);
             
-
-
            
         private:
 
-            std::vector<Features> mFeatures_;
-            std::vector<std::vector<Matches> > mMFeatureMatches_;
+            std::vector<Features>                   mFeatures_;
+            std::vector<std::vector<Matches> >      mMFeatureMatches_;
+            std::vector<cv::String>                 mFrames_;
 
 
             
             std::shared_ptr<SFM_IO>                     io_;
             
-            std::vector<cv::String>                     frame_list_;
-
+            
             cv::Matx33f                                 K_;
             cv::Matx34d                                 P_prev_;
             cv::Matx33d                                 R_prev_;
