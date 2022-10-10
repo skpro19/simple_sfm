@@ -21,13 +21,7 @@
 namespace simple_sfm{
 
     
-    struct Features{
-        
-        KeyPoints keypoints;
-        Points2d  points;
-        cv::Mat   descriptors;  
-
-    };
+    
 
     
 
@@ -50,16 +44,7 @@ namespace simple_sfm{
             void runVOPipeline();
 
             void runBundleAdjust(int se_, int en_);
-           // bool checkForDuplicates(const std::vector<cv::Point2f> &a_  , const std::vector<cv::Point2f> &b_) const;
-
-            void update3DCloud(const std::vector<cv::Point3f> &pts_);
-            
-            
-            void extractInliers( const std::vector<cv::Point2d> &kp_1f, 
-                                            const std::vector<cv::Point2d> &kp_2f,
-                                            std::vector<cv::Point2d> &kp_1f_in_, 
-                                            std::vector<cv::Point2d> kp_2f_in_,  
-                                            const cv::Mat &E_mask_);
+         
 
             void createFeatureMatrix();
             void createFeatureMatchMatrix();
@@ -67,6 +52,9 @@ namespace simple_sfm{
             std::map<float, ImagePair> sortViewsByHomography();
             int getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_);
             bool findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P2_, const ImagePair &img_pair_, Matches &pruned_matches_);
+
+            bool triangulateViews(const cv::Matx34d &P1_, const cv::Matx34d &P2_, const ImagePair &img_pair_, std::vector<CloudPoint3d> &pointcloud_);
+
 
         private:
 

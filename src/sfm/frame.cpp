@@ -11,22 +11,44 @@ simple_sfm::Frame::Frame() {
 
 }
 
-int simple_sfm::Frame::getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_){
+void simple_sfm::Frame::alignFeaturesUsingMatches(  const Features &f1_, const Features &f2_, 
+                                                    Features &f1_mat_, Features &f2_mat_, 
+                                                    std::vector<int> &ref_f1_, std::vector<int> &ref_f2_,
+                                                    const Matches &matches_) {
 
     Features f1_mat_, f2_mat_;
+    
     f1_mat_.keypoints.resize(0); 
     f2_mat_.keypoints.resize(0); 
+
+    f1_mat_.points.resize(0); 
+    f2_mat_.points.resize(0); 
+
+    ref_f1_.resize(0);
+    ref_f2_.resize(0);
 
 
     for(int i = 0 ;i  < (int)matches_.size(); i++) {
 
         f1_mat_.keypoints.push_back(f1_.keypoints[matches_[i].queryIdx]);
         f2_mat_.keypoints.push_back(f2_.keypoints[matches_[i].trainIdx]);
+        
+        f1_mat_.points.push_back(f1_.points[matches_[i].queryIdx]);
+        f2_mat_.points.push_back(f2_.points[matches_[i].trainIdx]);
+
+        ref_f1_.push_back(matches_[i].queryIdx);
+        ref_f2_.push_back(matches_[i].trainIdx);
 
     }
 
-    Frame::keypointsToPoints(f1_mat_);
-    Frame::keypointsToPoints(f2_mat_);
+
+}
+
+int simple_sfm::Frame::getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_){
+
+    Features f1_mat_, f2_mat_;
+    
+    Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_, matches_);
 
     assert(f1_mat_.keypoints.size()  == matches_.size());
 

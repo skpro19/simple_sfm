@@ -26,7 +26,7 @@ void simple_sfm::SimpleSFM::createFeatureMatrix(){
 
     for(int i = 0 ;i < num_frames_; i++) {
 
-        cv::Mat img_ = cv::imread(frame_list_[i].c_str());
+        cv::Mat img_ = cv::imread(mFrames_[i].c_str());
         
         Features features_;
         Frame::extractFeaturesAndDescriptors(img_, features_);
@@ -92,6 +92,7 @@ std::map<float, ImagePair> simple_sfm::SimpleSFM::sortViewsByHomography(){
 
 bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P2_, const ImagePair &img_pair_, Matches &pruned_matches_){
 
+    assert(img_pair_.first < img_pair_.second);
 
     cv::Mat E_, R, t, inlier_mask_;
 
@@ -107,7 +108,7 @@ bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P
 
     const int inlier_cnt_ = cv::recoverPose(E_, pts1_, pts2_, K_, R, t, inlier_mask_);
 
-    //if(inlier_cnt_ < 25) { return false;}
+    if(inlier_cnt_ < POSE_INLIERS_MINIMAL_COUNT) { return false;}
 
     P1_ = cv::Matx34d::eye();
 
@@ -118,7 +119,7 @@ bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P
     pruned_matches_.resize(0);
 
     const Matches &matches_ = mMFeatureMatches_[img_pair_.first][img_pair_.second];
-    
+        
     for(int i = 0 ; i < inlier_mask_.rows; i++) {
 
         if(inlier_mask_.at<uchar>(i)){
@@ -132,6 +133,73 @@ bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P
    
 }
 
+
+bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::Matx34d &P2_, const ImagePair &img_pair_, std::vector<CloudPoint3d> &pointcloud_){
+
+    const int i = img_pair_.first ;
+    const int j = img_pair_.second; 
+
+    assert(i < j);
+
+    const Features &f1_ = mFeatures_[i]; 
+    const Features &f2_ = mFeatures_[j]; 
+    const Matches &matches_ = mMFeatureMatches_[i][j];
+
+    Features f1_mat_, f2_mat_;
+    std::vector<int> ref_f1_, ref_f2_;
+    Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_,ref_f1_, ref_f2_,  matches_);
+
+    cv::Mat normalized_pts_1_, normalized_pts_2_;
+
+    cv::undistortPoints(f1_mat_.points, normalized_pts_1_, K_, cv::Mat());
+    cv::undistortPoints(f2_mat_.points, normalized_pts_2_, K_, cv::Mat());
+    
+    cv::Mat pts_4d_;
+    cv::triangulatePoints(P1_, P2_, normalized_pts_1_, normalized_pts_2_, pts_4d_);
+
+    cv::Mat pts_3d_;
+    cv::convertPointsFromHomogeneous(pts_4d_.t(), pts_3d_);
+    
+    cv::Mat rvec1_;
+    cv::Rodrigues(P1_.get_minor<3, 3>(0,0), rvec1_);
+    cv::Mat tvec1_(P1_.get_minor<3,1>(0,3).t());
+    
+
+    cv::Mat rvec2_;
+    cv::Rodrigues(P2_.get_minor<3, 3>(0,0), rvec2_);
+    cv::Mat tvec2_(P2_.get_minor<3,1>(0,3).t());
+    
+    Points2d projected_pts_1_, projected_pts_2_;
+    
+    cv::projectPoints(pts_4d_, rvec1_, tvec1_, K_, cv::Mat(), projected_pts_1_);
+    cv::projectPoints(pts_4d_, rvec2_, tvec2_, K_, cv::Mat(), projected_pts_2_);
+
+    for(int k = 0; k < pts_3d_.rows; k++){
+
+        double d1_ = cv::norm(projected_pts_1_[k] - f1_mat_.points[k]);
+        double d2_ = cv::norm(projected_pts_2_[k] - f2_mat_.points[k]);
+
+        if(d1_ > MIN_REPROJECTION_ERROR or d2_ > MIN_REPROJECTION_ERROR){
+
+            continue;
+
+        }
+
+        CloudPoint3d cloud_pt_;
+        cloud_pt_.point_ = cv::Point3d{pts_3d_.at<double>(k,0), pts_3d_.at<double>(k,1), pts_3d_.at<double>(k,2)};
+
+        cloud_pt_.viewMap[i] = ref_f1_[k];
+        cloud_pt_.viewMap[j] = ref_f2_[k];
+        
+        pointcloud_.push_back(cloud_pt_);
+        
+
+    }
+    
+    return true;
+    
+}
+
 void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 
 
@@ -142,12 +210,27 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
         const float ratio_ = elem_.first;
         const ImagePair &img_pair_  = elem_.second;
 
+        assert(img_pair_.first < img_pair_.second);
 
-        cv::Matx34d P1_ = cv::Matx34d::eye();
-        cv::Matx34d P2_ = cv::Matx34d::eye();
-        
-        
+        cv::Matx34d P1_, P2_;
 
+        Matches pruned_matches_;
+
+        bool success_ = findCameraMatrices(P1_, P2_, img_pair_, pruned_matches_);
+        
+        if(not success_) {continue;}
+
+        
+        const double inlier_ratio_ = 1.0 * (double)pruned_matches_.size() / (double)mMFeatureMatches_[img_pair_.first][img_pair_.second].size();
+
+        if (inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO) {
+
+            success_ = false;
+            continue;
+        }
+
+
+        mMFeatureMatches_[img_pair_.first][img_pair_.second] = pruned_matches_;
 
 
     }
@@ -155,7 +238,6 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 
     /*
 
-        - findCameraMatrices()
         - triangulatePoints()
 
     */
@@ -269,7 +351,7 @@ void simple_sfm::SimpleSFM::runBundleAdjust(int se_, int en_){
 void simple_sfm::SimpleSFM::updateIOParams() 
 {
 
-    io_->getImageFileNames(frame_list_);
+    io_->getImageFileNames(mFrames_);
     io_->getGTPoses(gt_poses_);
     
     P_prev_ = io_->getP0();
@@ -281,281 +363,3 @@ void simple_sfm::SimpleSFM::updateIOParams()
     R_prev_ = io_->getR0();
 
 }
-
-void simple_sfm::SimpleSFM::update3DCloud(const std::vector<cv::Point3f> &pts_)
-{
-    std::cout << "pt_cld_3d_.size(): " << (int)pt_cld__3d_.size() << std::endl;
-
-    int n_ = (int)pts_.size() ; 
-
-    for(int i = 0 ;i < n_; i++) 
-    {
-        
-        cv::Point3d p1_ = pts_[i]; 
-
-        int m_ = (int)pt_cld__3d_.size(); 
-
-        bool found_ = false;
-
-        for(int j =0 ; j  < m_ ; j++) {
-
-            cv::Point3d p2_ = pt_cld__3d_[j];
-
-            double dis_ = cv::norm(p1_ - p2_);
-
-            if(dis_  < 0.05) {
-
-                found_ = true; 
-                break;
-
-            }
-
-        }
-
-        if(!found_) {
-
-            pt_cld__3d_.push_back(p1_);
-
-        } 
-
-    }
-
-    std::cout << "pt_cld_3d_.size(): " << (int)pt_cld__3d_.size() << std::endl;
-
-}
-
-void simple_sfm::SimpleSFM::extractInliers( const std::vector<cv::Point2d> &kp_1f, 
-                                            const std::vector<cv::Point2d> &kp_2f,
-                                            std::vector<cv::Point2d> &kp_1f_in_, 
-                                            std::vector<cv::Point2d> kp_2f_in_,  
-                                            const cv::Mat &E_mask_){
-
-    std::vector<int> v_(E_mask_);
-
-    int mask_sum_ = std::accumulate(v_.begin(), v_.end(), 0);
-    
-    int v_sz_ = (int)v_.size() ; 
-
-    assert(v_sz_ == E_mask_.size().height);
-    assert((int)kp_1f_in_.size() == 0 && (int)kp_2f_in_.size() == 0);
-
-    for(int vi = 0 ; vi < v_sz_ ; vi++) {
-
-        int mask_ = v_[vi]; 
-
-        if(mask_) {
-
-            kp_1f_in_.push_back(kp_1f[vi]);
-            kp_2f_in_.push_back(kp_2f[vi]);
-        }
-
-    }
-
-    assert((int)kp_1f_in_.size() == mask_sum_);
-
-}
-       
-
-void simple_sfm::SimpleSFM::runVOPipeline(){
-
-    
-    cv::Mat E_, R, t;
-    cv::Mat R_f, t_f;
-
-    cv::Mat C_k_, C_k_minus_1_;
-    cv::Mat T_k_;
-
-    R_f.convertTo(R_f, CV_64F);
-    t_f.convertTo(t_f, CV_64F);
-
-    R.convertTo(R, CV_64F);
-    t.convertTo(t, CV_64F);    
-
-    C_k_.convertTo(C_k_, CV_64F);
-    C_k_minus_1_.convertTo(C_k_minus_1_, CV_64F);
-    
-    cv::Mat NO_ROT_ = cv::Mat::eye(3, 3, CV_64F);
-    cv::Mat NO_T_ = cv::Mat::zeros(3, 1, CV_64F);
-    
-    cv::Mat TEMP_ = (cv::Mat_<double>(1, 4) << 0, 0, 0, 1); 
-    TEMP_.convertTo(TEMP_, CV_64F);
-    
-    //** Initializing C_k_minus_1 with 0 translation and 0 rotation w.r.t. the 'some' initial co-ordinate frame
-    cv::hconcat(NO_ROT_, NO_T_, C_k_minus_1_);
-    cv::vconcat(C_k_minus_1_, TEMP_, C_k_minus_1_);
-
-    int last_idx_ = 0 ;
-
-    int sz_ = frame_list_.size(); 
-
-    views_.resize(sz_);
-
-    ceres::Problem::Options problem_options;
-    ceres::Problem problem(problem_options);
-    
-    int ba_se_ = 1; 
-    int ba_en_;
-
-    for(int i = 1 ; i < sz_; i++) {
-
-        std::cout << "i: " << i << std::endl;
-    
-        Frame::kp_1.resize(0); 
-        Frame::kp_2.resize(0); 
-
-        Frame::kp_1_matched.resize(0); 
-        Frame::kp_2_matched.resize(0);
-    
-        cv::Mat img_1 = cv::imread(frame_list_[last_idx_].c_str());
-        cv::Mat img_2 = cv::imread(frame_list_[i].c_str());
-
-        Frame::extractAndMatchFeatures(img_1, img_2);
-
-        assert((int)Frame::kp_1_matched.size() == (int)Frame::kp_2_matched.size());
-
-        std::vector<cv::Point2d> kp_1f, kp_2f; //array of keypoint co-ordinates
-
-        //std::cout << "i: " << i << " kp_1_matched.size(): " << (int)Frame::kp_1_matched.size() << std::endl;
-
-        for(int k = 0; k < (int)Frame::kp_1_matched.size(); k++) {
-
-            cv::Point2f p1_ = Frame::kp_1_matched[k].pt, p2_ = Frame::kp_2_matched[k].pt;
-            
-            kp_1f.push_back(p1_); 
-            kp_2f.push_back(p2_);
-
-            cv::circle( img_1, p1_, 2, cv::viz::Color::yellow(), -1 );
-            cv::line(img_1, p1_, p2_, cv::viz::Color::pink());
-            cv::circle( img_1, p2_, 2, cv::viz::Color::orange_red(), -1 );
-        }
-        
-        //std::cout << "HI" << std::endl;
-        //======== check for duplicate kps ==============
-
-        bool dup_kp_flag_ = checkForDuplicates(kp_1f, kp_2f);
-        
-        if(!dup_kp_flag_) {continue;}
-
-        //===============================================       
-
-        cv::Mat E_mask_;
-        E_mask_.convertTo(E_mask_, CV_64F);
-
-        E_ = cv::findEssentialMat(kp_2f, kp_1f, K_,cv::RANSAC, 0.999, 1.0, E_mask_);
-
-        int inlier_cnt_ =0 ; 
-
-        inlier_cnt_ = cv::recoverPose(E_, kp_2f, kp_1f, K_, R, t, E_mask_);
-
-        //std::cout << "inlier_cnt_: " << inlier_cnt_ << std::endl;
-
-        double scale_;
-
-        double del_z_ = std::fabs(t.at<double>(2,0)); 
-        double del_y_ = std::fabs(t.at<double>(1,0));
-        double del_x_ = std::fabs(t.at<double>(0,0));
-        
-        
-        if(inlier_cnt_ < 100) {continue;}
-
-        bool duplicate_flag_ = checkForDuplicates(kp_1f, kp_2f);
-
-        assert(duplicate_flag_);
-
-        scale_ = Frame::getScale(cv::Mat(gt_poses_[i]), cv::Mat(gt_poses_[last_idx_])); 
-
-        bool flag_ = ((scale_ > 0.1) &&  (del_z_ > del_x_) && (del_z_ > del_y_))  ; 
-        
-        std::cout << std::endl;
-
-        if(!flag_) {continue;}
-        
-
-        cv::Mat temp_ = (cv::Mat_<double>(1, 4) << 0, 0, 0, 1); 
-        temp_.convertTo(temp_, CV_64F);
-
-        T_k_.convertTo(T_k_, CV_64F);
-
-        cv::hconcat(R, t, T_k_);
-        cv::vconcat(T_k_, temp_, T_k_);
-
-        C_k_ =  C_k_minus_1_ * T_k_;
-     
-        //*     =====================   Inliers extraction  =======================
-       
-        std::vector<cv::Point2d> kp_1f_in_, kp_2f_in_; //inlier kps_
-        extractInliers(kp_1f, kp_2f, kp_1f_in_, kp_2f_in_, E_mask_);
-        
-        //*     ====================    Triangulation        ======================
-        
-        cv::Matx34f P_k_, P_k_minus_1_;
-        cv::Matx34f c_k_, c_k_minus_1_; 
-
-        c_k_ = convert44to34Mat(C_k_);
-        c_k_minus_1_ = convert44to34Mat(C_k_minus_1_);
-
-        P_k_ = K_ * c_k_;
-        P_k_minus_1_ = K_ * c_k_minus_1_;
-        
-        cv::Mat pts_4d_;
-
-        cv::triangulatePoints(P_k_, P_k_minus_1_, kp_1f_in_, kp_2f_in_, pts_4d_);
-        
-        std::vector<cv::Point3d> pts_3d_;
-        
-        convertPointsFromHomogeneous_(pts_4d_, pts_3d_);
-        
-        assert((int)pts_3d_.size() == (int)kp_2f_in_.size());
-        
-        // * ======================= VIEW PROCESSING  ===========================
-    
-        std::shared_ptr<View> view_ = std::make_shared<View>();
-        
-        view_->updateView(kp_2f_in_, pts_3d_, K_, C_k_);
-        views_[i] = view_;
-
-        // ===================================================================
-        
-
-
-    
-
-
-        
-            
-        
-        //  ==================================================================================
-
-        C_k_minus_1_ = C_k_;
-        last_idx_ = i;
-
-        //std::cout <<  i << "--->[x y z]: " << "(" <<C_k_.at<double>(0, 3) << "," << C_k_.at<double>(1, 3) << "," << C_k_.at<double>(2,3) << ")" << std::endl; 
-        
-        if(i % 20 == 0) {
-
-            //std::cout << "Runnning bundle adjustment!" << std::endl;
-            
-            ba_en_ = ba_se_ + 19;
-            runBundleAdjust(ba_se_, ba_en_);
-            std::cout << "ba_se_: " << ba_se_ << " ba_en_: " << ba_en_ << std::endl;
-            
-            ba_se_ += (i + 1);
-            //std::cout << "Hello!" << std::endl;
-        }
-
-        //cv::imshow("img_1" , img_1); 50+ inch
-        //Vis::drawKeyPoints(img_1, kp_1f, kp_2f);
-
-        //Vis::updateGroundPose(cv::Mat(gt_poses_[i]));
-       // Vis::updatePredictedPose(C_k_);
-        std::cout << "pt_cld_size: " << View::point_cloud_.size() << std::endl;
-
-        cv::waitKey(10);
-    }
-    
-    
-    //std::cout << "pt_3d_cld_.size(): " << (int)pt_cld__3d_.size() << std::endl;
-
-    //runBundleAdjust();  
-}
-

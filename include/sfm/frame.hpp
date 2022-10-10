@@ -36,8 +36,11 @@ namespace simple_sfm{
             static Matches getMatches(const Features &f1_, const Features &f2_);
 
             static int getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_);
-
-
+            
+            static void alignFeaturesUsingMatches(  const Features &f1_, const Features &f2_, 
+                                                    Features &f1_mat_, Features &f2_mat_, 
+                                                    std::vector<int> &ref_f1_, std::vector<int> &ref_f2_,
+                                                    const Matches &matches_) ;
         private:
 
             //static inline cv::Ptr<cv::ORB>  orb_ = cv::ORB::create(5000);
