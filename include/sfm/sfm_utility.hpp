@@ -14,7 +14,6 @@
 
 namespace simple_sfm{
 
-    //void MatToEigen(const cv::Mat &mat_, )
     cv::Matx44d unpackCameraExtrinsics(const Vec6d &extrinsics);
 
     void convertPointsFromHomogeneous_(cv::Mat &pts_4d_, std::vector<Point3D> &pts_3d_);

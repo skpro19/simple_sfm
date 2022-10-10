@@ -76,9 +76,9 @@ std::map<float, ImagePair> simple_sfm::SimpleSFM::sortViewsByHomography(){
             }
             
             
-            int inliers_cnt_ = Frame::getHomographyInliersCount(mFeatures_[i], mFeatures_[j], mMFeatureMatches_[i][j]);
+            const int inliers_cnt_ = Frame::getHomographyInliersCount(mFeatures_[i], mFeatures_[j], mMFeatureMatches_[i][j]);
 
-            double inlier_ratio_ = 1.0 * (double)inliers_cnt_/ (double)mMFeatureMatches_[i][j].size(); 
+            const double inlier_ratio_ = 1.0 * (double)inliers_cnt_/ (double)mMFeatureMatches_[i][j].size(); 
 
             homography_ratio_map_[inlier_ratio_] = ImagePair{i,j};
 
@@ -131,6 +131,103 @@ bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P
 
     return true;
    
+}
+
+
+bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
+
+    const int n_ = (int)mFrames_.size(); 
+
+    int best_frame_idx_ = -1; 
+    int mx_match_cnt_ = -1;
+
+    for(int i = 0 ; i < n_; i++) {
+
+        if(mDoneViews_.find(i) != mDoneViews_.end()) {continue;}
+
+        const int curr_view_idx_ = i; 
+
+        int match_cnt_ = 0 ; 
+
+        for(const auto &cloud_pt_: mPointCloud_){
+
+            bool matching_feature_found_ = false;
+
+            const cv::Point3d &pt_3d_ = cloud_pt_.point_;
+            const std::map<int, int> &view_map_ = cloud_pt_.viewMap; 
+
+            for(const auto &item_: view_map_){
+                
+                const int &pt_view_idx_ = item_.first; 
+                const int &feature_idx_ = item_.second;
+
+                const int &left_idx_ = (pt_view_idx_ > curr_view_idx_ ? curr_view_idx_: pt_view_idx_);
+                const int &right_idx_ = (pt_view_idx_ > curr_view_idx_ ? pt_view_idx_: curr_view_idx_);
+                
+                assert(left_idx_ < right_idx_);
+
+                const Matches &matches_ = mMFeatureMatches_[left_idx_][right_idx_];
+
+                for(const auto &match: matches_){
+                    
+                    matching_feature_found_ = ((curr_view_idx_ > pt_view_idx_)  ? (match.trainIdx == pt_view_idx_) : (match.queryIdx == pt_view_idx_));
+
+                    if(matching_feature_found_) {
+                        
+                        match_cnt_++;
+                        break;
+
+                    }
+                }
+
+                if(matching_feature_found_) {break;}
+            
+            }
+        }
+
+        if(match_cnt_ > mx_match_cnt_) {
+
+            mx_match_cnt_ = match_cnt_; 
+            best_frame_idx_ = curr_view_idx_;
+
+        }
+    }
+
+    if(best_frame_idx_ != -1) {
+
+        idx_ = best_frame_idx_ ;
+        return true;
+    }
+
+    return false;
+}
+
+void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
+
+    int done_views_size_ = (int)mDoneViews_.size(); 
+
+    if(done_views_size_ == mFrames_.size()) {
+
+        std::cout << "done_views_size_ == mFrames.size()" << std::endl;
+        return;
+            
+    }
+
+    int idx_;
+    bool success_ = getBestViewIndexToMerge(idx_);
+
+    assert(success_);
+
+
+
+    /*  
+        - addPointsFromBestViewToExistingGoodViews
+        -mergePointCloud
+
+
+    */
+
+
 }
 
 
@@ -202,7 +299,7 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::M
 
 void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 
-    
+
     const std::map<float, ImagePair> homography_ratio_map_  = sortViewsByHomography();
     cv::Matx34d P1_, P2_;
     std::vector<CloudPoint3d> pointcloud_;
@@ -256,15 +353,15 @@ void simple_sfm::SimpleSFM::runSFMPipeline() {
 
     createFeatureMatchMatrix();
     
-
+    initializeBaselineSFM();
+        
 
     
 
     /*
 
 
-        initializeBaselineSFM();
-        addViewToSFM();    
+        addMoreViewsToReconstruction();    
 
 
     */
