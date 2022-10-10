@@ -61,6 +61,11 @@ namespace simple_sfm{
             std::vector<Features>                   mFeatures_;
             std::vector<std::vector<Matches> >      mMFeatureMatches_;
             std::vector<cv::String>                 mFrames_;
+            std::vector<cv::Matx34d>                mCameraPoses_;
+
+            std::vector<CloudPoint3d>               mPointCloud_;
+            std::set<int>                           mGoodViews_;
+            std::set<int>                           mDoneViews_;
 
 
             

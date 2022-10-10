@@ -202,8 +202,10 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::M
 
 void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 
-
+    
     const std::map<float, ImagePair> homography_ratio_map_  = sortViewsByHomography();
+    cv::Matx34d P1_, P2_;
+    std::vector<CloudPoint3d> pointcloud_;
 
     for(const auto &elem_: homography_ratio_map_){
 
@@ -212,14 +214,14 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 
         assert(img_pair_.first < img_pair_.second);
 
-        cv::Matx34d P1_, P2_;
-
+        const int i = img_pair_.first; 
+        const int j = img_pair_.second;
+        
         Matches pruned_matches_;
 
         bool success_ = findCameraMatrices(P1_, P2_, img_pair_, pruned_matches_);
         
         if(not success_) {continue;}
-
         
         const double inlier_ratio_ = 1.0 * (double)pruned_matches_.size() / (double)mMFeatureMatches_[img_pair_.first][img_pair_.second].size();
 
@@ -229,22 +231,23 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
             continue;
         }
 
-
         mMFeatureMatches_[img_pair_.first][img_pair_.second] = pruned_matches_;
+
+        success_ = triangulateViews(P1_, P2_, img_pair_, pointcloud_);
+
+        if(not success_) {continue;}
+
+        mCameraPoses_[i] = P1_; 
+        mCameraPoses_[j] = P2_;
+
+        mDoneViews_.insert(i);
+        mDoneViews_.insert(j);
+
+        mPointCloud_ = pointcloud_;
 
 
     }
-
-
-    /*
-
-        - triangulatePoints()
-
-    */
-
-
-
-
+    
 }
 
 void simple_sfm::SimpleSFM::runSFMPipeline() {
