@@ -56,7 +56,8 @@ namespace simple_sfm{
             bool triangulateViews(const cv::Matx34d &P1_, const cv::Matx34d &P2_, const ImagePair &img_pair_, std::vector<CloudPoint3d> &pointcloud_);
             void addMoreViewsToReconstruction();
             bool getBestViewIndexToMerge(int &idx_);
-        
+            Match2D3D get2D3DMatches(const int idx_);
+
         private:
 
             std::vector<Features>                   mFeatures_;

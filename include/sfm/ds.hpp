@@ -15,6 +15,7 @@
 
 using KeyPoints     =       std::vector<cv::KeyPoint>;
 using Points2d      =       std::vector<cv::Point2d>;
+using Points3d      =       std::vector<cv::Point3d>;
 using Matches       =       std::vector<cv::DMatch>;
 using ImagePair     =       std::pair<int, int>;
 
@@ -38,7 +39,15 @@ struct CloudPoint3d{
     cv::Point3d point_;
     std::map<int, int> viewMap; //<view_idx, pt_idx_>
 
-}
+};
+
+struct Match2D3D{
+
+    Points2d pts_2d_; 
+    Points3d pts_3d_;
+
+};
+
 
 /*using Point2D       =       cv::Point2f ;
 using Point3D       =       cv::Point3d;
