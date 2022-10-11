@@ -450,8 +450,8 @@ void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
         //- getBestView
         //- get2d3Dmatches
         //- estimateCameraPosition
-        - addPointsFromBestViewToExistingGoodViews
-        - mergePointCloud
+        //- addPointsFromBestViewToExistingGoodViews
+        //- mergePointCloud
 
 
     */
@@ -586,7 +586,7 @@ void simple_sfm::SimpleSFM::runSFMPipeline() {
     
     initializeBaselineSFM();
         
-
+    addMoreViewsToReconstruction();
     
 
     /*
