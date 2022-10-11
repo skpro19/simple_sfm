@@ -1,5 +1,6 @@
 //#include "../../include/sfm/vis.hpp"
 
+/*
 #include "../../include/sfm/sfm.hpp"
 
 simple_sfm::Vis::Vis()
@@ -107,4 +108,4 @@ void simple_sfm::Vis::drawKeyPoints(cv::Mat &mat_, const Points2D &kp_a_)
     //::imshow("Features", mat_);
     //::waitKey(10);
 
-}
+}*/

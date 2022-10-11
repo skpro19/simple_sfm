@@ -1,5 +1,4 @@
 #include "../../include/sfm/sfm.hpp"
-//#include "../../include/sfm/io.hpp"
 
 
 int main(){
@@ -9,7 +8,7 @@ int main(){
     
     simple_sfm::SimpleSFM sfm_(base_folder_);   
     
-    sfm_.runVOPipeline();
+    //sfm_.runVOPipeline();
     
     
 }

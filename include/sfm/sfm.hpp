@@ -6,16 +6,11 @@
 // ========================================================
 
 //#include "bookkeeping.hpp"
-#include "sfm_utility.hpp"
-#include "vis.hpp"
-#include "io.hpp"
+//#include "vis.hpp"
 #include "frame.hpp"
-#include "view.hpp"
-#include "ba.hpp"
-//#include "ds.hpp"
-
+#include "io.hpp"
 #include <ceres/cost_function.h>
-#include <opencv2/core/eigen.hpp>
+//#include <opencv2/core/eigen.hpp>
 
 
 namespace simple_sfm{
@@ -38,13 +33,8 @@ namespace simple_sfm{
             
 
             void runSFMPipeline();
-            void addNextFrame(int frame_idx_);
-
-
-            void runVOPipeline();
-
-            void runBundleAdjust(int se_, int en_);
-         
+            
+            
 
             void createFeatureMatrix();
             void createFeatureMatchMatrix();
@@ -57,7 +47,6 @@ namespace simple_sfm{
             bool getBestViewIndexToMerge(int &idx_);
             Match2D3D get2D3DMatches(const int idx_);
             bool updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_pose_, const Match2D3D &match2d3d_);
-
             void mergeNewPointCloud(std::vector<CloudPoint3d> &pointcloud_);
             
 
@@ -93,9 +82,9 @@ namespace simple_sfm{
             void match_features(const cv::Mat &img_1, const cv::Mat &img_2);
             double getScale(int curr_idx_, int prev_idx_);
 
-            std::vector<std::shared_ptr<View> > views_;
+            //std::vector<std::shared_ptr<View> > views_;
             
-            std::vector<std::shared_ptr<Mat34f> >cam_extrinsics_;
+            //std::vector<std::shared_ptr<Mat34f> >cam_extrinsics_;
             
     };
 

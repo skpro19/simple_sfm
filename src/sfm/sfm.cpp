@@ -578,7 +578,7 @@ void simple_sfm::SimpleSFM::runSFMPipeline() {
 
 
 
-void simple_sfm::SimpleSFM::runBundleAdjust(int se_, int en_){
+/*void simple_sfm::SimpleSFM::runBundleAdjust(int se_, int en_){
 
     std::cout << "Inside runBundleAdjustment function!" << std::endl;
 
@@ -652,7 +652,7 @@ void simple_sfm::SimpleSFM::runBundleAdjust(int se_, int en_){
         
         
     }
-}
+}*/
 
 void simple_sfm::SimpleSFM::updateIOParams() 
 {

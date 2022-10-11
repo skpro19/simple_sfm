@@ -6,6 +6,7 @@
 //  =============   Visualization related functions  ==========================
 //  ===========================================================================
 
+/*
 #include "ds.hpp"
 #include <opencv2/viz/types.hpp>
 
@@ -19,8 +20,8 @@ namespace simple_sfm {
 
             Vis();
 
-            static void drawKeyPoints(cv::Mat &mat_, const Points2D &kp_a_, const Points2D &kp_b_);
-            static void drawKeyPoints(cv::Mat &mat_, const Points2D &kp_a_);
+            static void drawKeyPoints(cv::Mat &mat_, const Points2d &kp_a_, const Points2d &kp_b_);
+            static void drawKeyPoints(cv::Mat &mat_, const Points2d &kp_a_);
             static void displayFrame(const cv::Mat &frame_);
 
 
@@ -40,4 +41,8 @@ namespace simple_sfm {
 
 };
 
+*/
+
+
 #endif
+

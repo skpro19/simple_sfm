@@ -16,7 +16,7 @@ void simple_sfm::Frame::alignFeaturesUsingMatches(  const Features &f1_, const F
                                                     std::vector<int> &ref_f1_, std::vector<int> &ref_f2_,
                                                     const Matches &matches_) {
 
-    Features f1_mat_, f2_mat_;
+    //Features f1_mat_, f2_mat_;
     
     f1_mat_.keypoints.resize(0); 
     f2_mat_.keypoints.resize(0); 
@@ -47,8 +47,9 @@ void simple_sfm::Frame::alignFeaturesUsingMatches(  const Features &f1_, const F
 int simple_sfm::Frame::getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_){
 
     Features f1_mat_, f2_mat_;
+    std::vector<int> ref_f1_, ref_f2_;
     
-    Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_, matches_);
+    Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_, ref_f1_, ref_f2_, matches_);
 
     assert(f1_mat_.keypoints.size()  == matches_.size());
 
