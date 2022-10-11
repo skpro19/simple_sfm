@@ -58,6 +58,8 @@ namespace simple_sfm{
             Match2D3D get2D3DMatches(const int idx_);
             bool updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_pose_, const Match2D3D &match2d3d_);
 
+            void mergeNewPointCloud(std::vector<CloudPoint3d> &pointcloud_);
+            
 
         private:
 

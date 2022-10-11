@@ -131,7 +131,6 @@ bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P
    
 }
 
-
 bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
 
     const int n_ = (int)mFrames_.size(); 
@@ -281,9 +280,86 @@ bool simple_sfm::SimpleSFM::updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_po
     
 }
 
+void simple_sfm::SimpleSFM::mergeNewPointCloud(std::vector<CloudPoint3d> &pointcloud_){
+
+    int merge_cnt_ = 0 ;
+    int new_pts_cnt_  = 0 ;
+
+    for(const CloudPoint3d &new_pt_ : pointcloud_){
+
+        bool matching_3d_pt_found_ = false;
+        bool any_matching_view_pt_found_ = false;
+
+        for(auto &existing_pt_: mPointCloud_){
+
+            const double norm_ = cv::norm(new_pt_.point_ - existing_pt_.point_);
+
+            if(norm_ < MERGE_CLOUD_POINT_MIN_MATCH_DISTANCE) {
+
+                matching_3d_pt_found_ = true;
+
+                for(const auto &new_view_: new_pt_.viewMap){
+                    
+                    const int new_view_idx_ = new_view_.first; 
+                    const int new_feature_idx_ = new_view_.second;
+                    
+                    for(auto &existing_view_: existing_pt_.viewMap){
+                        
+                        bool matching_view_pt_found_ = false;
+
+                        const int existing_view_idx_ = existing_view_.first; 
+                        const int existing_feature_idx_=  existing_view_.second;
+
+                        const ImagePair image_pair_ = ((existing_view_idx_ > new_view_idx_) ? ImagePair{new_view_idx_, existing_view_idx_}: ImagePair{existing_view_idx_, new_view_idx_});
+
+                        const Matches &matches_ =  mMFeatureMatches_[image_pair_.first][image_pair_.second];
+
+                        for(const auto &match_ : matches_) {
+
+                            if( match_.trainIdx == image_pair_.first && 
+                                match_.queryIdx == image_pair_.second && 
+                                match_.distance < MERGE_CLOUD_FEATURE_MIN_MATCH_DISTANCE) {
+                                
+                                matching_view_pt_found_ = true; 
+                                break;
+                                
+                            }
+                        }
+
+                        if(matching_view_pt_found_) {
+                            
+                            any_matching_view_pt_found_ = true;
+                            existing_pt_.viewMap[new_view_idx_] = new_feature_idx_;
+                        
+                        }
+                    }
+                }
+
+
+                
+
+            }
+
+            if(any_matching_view_pt_found_){
+
+                merge_cnt_++;
+                break;
+
+            }
+        }
+
+        if(not matching_3d_pt_found_ and not any_matching_view_pt_found_) {
+
+            mPointCloud_.push_back(new_pt_);
+            new_pts_cnt_++;
+
+        }
+    }
+    
+}
+
 void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
 
-    
     for(int i = 0; i < mFrames_.size(); i++ ) {
 
         if(mDoneViews_.size() == mFrames_.size()) {
@@ -295,16 +371,75 @@ void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
 
         int best_view_idx_;
         bool success_ = getBestViewIndexToMerge(best_view_idx_);
+        
+        mDoneViews_.insert(best_view_idx_);
 
-        assert(success_);
+        //assert(success_);
+
+        if(!success_) {
+
+            continue;
+        }
 
         Match2D3D match2d3d_ = get2D3DMatches(best_view_idx_);
-
+        
         assert(match2d3d_.pts_2d_.size() == match2d3d_.pts_3d_.size());
 
         assert(match2d3d_.pts_2d_.size() > MIN_POINT_COUNT_FOR_2D3DMATCH);
 
+        cv::Matx34d camera_pose_;
 
+        success_  = updateCameraPoseFrom2D3DMatch(camera_pose_, match2d3d_);  
+
+        if(!success_) {
+
+            continue;
+
+        }
+
+        mCameraPoses_[best_view_idx_] = camera_pose_;
+
+        for(const int &good_view_ : mGoodViews_){
+
+            CloudPoint3d cloud_pt_ = mPointCloud_[good_view_];
+
+            for(const auto &view_: cloud_pt_.viewMap){
+
+                int view_idx_ = view_.first; 
+                //int feature_idx_ = view_.second;
+
+                cv::Matx34d P1_, P2_;
+
+                const ImagePair img_pair_ = ( (view_idx_ > best_view_idx_) ? ImagePair{best_view_idx_, view_idx_} : ImagePair{view_idx_, best_view_idx_} ); 
+                
+                Matches pruned_matches_;
+
+                bool flag_ = findCameraMatrices(P1_, P2_, img_pair_, pruned_matches_); 
+
+                if(!flag_) {
+
+                    continue;
+
+                }
+
+                mMFeatureMatches_[img_pair_.first][img_pair_.second] = pruned_matches_;
+
+                
+                std::vector<CloudPoint3d> pointcloud_;
+
+                flag_ = triangulateViews(P1_, P2_, img_pair_, pointcloud_);
+
+                if(!flag_) {
+
+                    continue;
+
+                }
+
+                mergeNewPointCloud(pointcloud_);
+
+            }
+
+        }
 
     }
     
@@ -314,7 +449,7 @@ void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
     /*  
         //- getBestView
         //- get2d3Dmatches
-        - estimateCameraPosition
+        //- estimateCameraPosition
         - addPointsFromBestViewToExistingGoodViews
         - mergePointCloud
 
@@ -434,8 +569,10 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
         mDoneViews_.insert(i);
         mDoneViews_.insert(j);
 
-        mPointCloud_ = pointcloud_;
+        mGoodViews_.insert(i);
+        mGoodViews_.insert(j);
 
+        mPointCloud_ = pointcloud_;
 
     }
     

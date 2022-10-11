@@ -24,12 +24,13 @@ const cv::Rect &ROT_    =       cv::Rect(0, 0, 3, 3);
 const cv::Rect &TRA_    =       cv::Rect(3, 0, 1, 3);
 
 
-const int       MIN_POINT_COUNT_FOR_HOMOGRAPHY  =   100;
-const int       MIN_POINT_COUNT_FOR_2D3DMATCH  =    30;
-
-const double    POSE_INLIERS_MINIMAL_RATIO      =   0.5;
-const double    POSE_INLIERS_MINIMAL_COUNT      =   25;
-const double    MIN_REPROJECTION_ERROR          =   10.0;
+const int       MIN_POINT_COUNT_FOR_HOMOGRAPHY          =   100;
+const int       MIN_POINT_COUNT_FOR_2D3DMATCH           =   30;
+const double    POSE_INLIERS_MINIMAL_RATIO              =   0.5;
+const double    POSE_INLIERS_MINIMAL_COUNT              =   25;
+const double    MIN_REPROJECTION_ERROR                  =   10.0;
+const double    MERGE_CLOUD_POINT_MIN_MATCH_DISTANCE    =   0.01;
+const double    MERGE_CLOUD_FEATURE_MIN_MATCH_DISTANCE  =   20.0;
 
 struct Features{
         
