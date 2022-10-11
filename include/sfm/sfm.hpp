@@ -52,11 +52,12 @@ namespace simple_sfm{
             std::map<float, ImagePair> sortViewsByHomography();
             int getHomographyInliersCount(const Features &f1_, const Features &f2_, const Matches &matches_);
             bool findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P2_, const ImagePair &img_pair_, Matches &pruned_matches_);
-
             bool triangulateViews(const cv::Matx34d &P1_, const cv::Matx34d &P2_, const ImagePair &img_pair_, std::vector<CloudPoint3d> &pointcloud_);
             void addMoreViewsToReconstruction();
             bool getBestViewIndexToMerge(int &idx_);
             Match2D3D get2D3DMatches(const int idx_);
+            bool updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_pose_, const Match2D3D &match2d3d_);
+
 
         private:
 

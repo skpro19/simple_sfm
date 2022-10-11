@@ -249,28 +249,71 @@ Match2D3D simple_sfm::SimpleSFM::get2D3DMatches(const int view_idx_){
 
 }
 
-void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
+bool simple_sfm::SimpleSFM::updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_pose_, const Match2D3D &match2d3d_){
 
-    int done_views_size_ = (int)mDoneViews_.size(); 
+    bool success_ = false;
 
-    if(done_views_size_ == mFrames_.size()) {
+    cv::Mat rvec_, tvec_; 
+    cv::Mat inliers_;
+    
+    success_ = cv::solvePnPRansac(match2d3d_.pts_3d_, match2d3d_.pts_2d_, K_, cv::Mat(), rvec_, tvec_,false,100,8.0, 0.99, inliers_);
 
-        std::cout << "done_views_size_ == mFrames.size()" << std::endl;
-        return;
-            
+    if(!success_) {return success_; }
+
+    assert(inliers_.rows != match2d3d_.pts_2d_.size());
+
+    const double inlier_ratio_ = (1.0) * ((double)inliers_.rows/ (double)match2d3d_.pts_2d_.size());
+
+    if(inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO) {
+
+        std::cout << "inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO" << std::endl;;
+        return false;
+
     }
 
-    int idx_;
-    Match2D3D match2d3d_;
-    bool success_ = getBestViewIndexToMerge(idx_);
+    cv::Mat R_;
+    cv::Rodrigues(rvec_, R_);
+    
+    R_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(ROT_));
+    tvec_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(TRA_));
+    
+    return true;
+    
+}
 
-    assert(success_);
+void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
 
+    
+    for(int i = 0; i < mFrames_.size(); i++ ) {
+
+        if(mDoneViews_.size() == mFrames_.size()) {
+
+            std::cout << "mDoneViews.size() == mFrames.size()!" << std::endl;
+            break;
+
+        }
+
+        int best_view_idx_;
+        bool success_ = getBestViewIndexToMerge(best_view_idx_);
+
+        assert(success_);
+
+        Match2D3D match2d3d_ = get2D3DMatches(best_view_idx_);
+
+        assert(match2d3d_.pts_2d_.size() == match2d3d_.pts_3d_.size());
+
+        assert(match2d3d_.pts_2d_.size() > MIN_POINT_COUNT_FOR_2D3DMATCH);
+
+
+
+    }
+    
+    
 
 
     /*  
         //- getBestView
-        - get2d3Dmatches
+        //- get2d3Dmatches
         - estimateCameraPosition
         - addPointsFromBestViewToExistingGoodViews
         - mergePointCloud

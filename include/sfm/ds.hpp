@@ -13,15 +13,20 @@
 
 
 
-using KeyPoints     =       std::vector<cv::KeyPoint>;
-using Points2d      =       std::vector<cv::Point2d>;
-using Points3d      =       std::vector<cv::Point3d>;
-using Matches       =       std::vector<cv::DMatch>;
-using ImagePair     =       std::pair<int, int>;
+using KeyPoints         =       std::vector<cv::KeyPoint>;
+using Points2d          =       std::vector<cv::Point2d>;
+using Points3d          =       std::vector<cv::Point3d>;
+using Matches           =       std::vector<cv::DMatch>;
+using ImagePair         =       std::pair<int, int>;
 
+
+const cv::Rect &ROT_    =       cv::Rect(0, 0, 3, 3);
+const cv::Rect &TRA_    =       cv::Rect(3, 0, 1, 3);
 
 
 const int       MIN_POINT_COUNT_FOR_HOMOGRAPHY  =   100;
+const int       MIN_POINT_COUNT_FOR_2D3DMATCH  =    30;
+
 const double    POSE_INLIERS_MINIMAL_RATIO      =   0.5;
 const double    POSE_INLIERS_MINIMAL_COUNT      =   25;
 const double    MIN_REPROJECTION_ERROR          =   10.0;
@@ -49,31 +54,6 @@ struct Match2D3D{
 };
 
 
-/*using Point2D       =       cv::Point2f ;
-using Point3D       =       cv::Point3d;
-
-using Points2D      =       std::vector<Point2D> ;
-using Points3D      =       std::vector<cv::Point3f> ;
-
-using Match         =       cv::DMatch; 
-using Matches       =       std::vector<Match>;
-using Poses         =       std::vector<cv::Mat>;
-
-typedef Eigen::Vector2f Vec2f;
-typedef Eigen::Vector2d Vec2d;
-
-typedef Eigen::Vector3f Vec3f;
-typedef Eigen::Vector3d Vec3d;
-
-typedef Eigen::Matrix<float , 6, 1> Vec6f;
-typedef Eigen::Matrix<double , 6, 1> Vec6d;
-
-typedef Eigen::Matrix<float, 3, 3> Mat3f;
-typedef Eigen::Matrix<double, 3, 3> Mat3d;
-
-typedef Eigen::Matrix<float, 3, 4> Mat34f;
-typedef Eigen::Matrix<double, 4, 4> Mat4d;
-*/
 
 
 
