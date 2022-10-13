@@ -19,6 +19,8 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 
 void simple_sfm::SimpleSFM::createFeatureMatrix(){
 
+    //std::cout << "Inside createFeatureMatrix!" << std::endl;
+
     int num_frames_ = mFrames_.size();
 
     mFeatures_.resize(num_frames_);
@@ -32,79 +34,136 @@ void simple_sfm::SimpleSFM::createFeatureMatrix(){
         Frame::extractFeaturesAndDescriptors(img_, features_);
         Frame::keypointsToPoints(features_);        
         mFeatures_[i] = features_;
-    
+        
+        //std::cout << "mFeatures_[i].keypoints.size(): " << mFeatures_[i].keypoints.size() << std::endl;
+        
     }
 
-}
+    //for(auto t : mFeatures_) std::cout << t.keypoints.size() << std::endl;
+
+    //std::cout << "DONE!" << std::endl;
+
+
+}   
 
 void simple_sfm::SimpleSFM::createFeatureMatchMatrix(){
 
+    //std::cout << "Inside createFeatureMatchMatrix!" << std::endl;
     int n_ = mFrames_.size(); 
 
     mMFeatureMatches_.resize(n_);
 
     for(int i = 0 ; i < n_ ; i++) {
+        
+        std::vector<Matches> v_(n_);
 
-        for(int j = i + 1; i < n_ ; i++) {
+        for(int j = i + 1; j < n_ ; j++) {
 
             Matches matches_ = Frame::getMatches(mFeatures_[i], mFeatures_[j]);
 
-            mMFeatureMatches_[i].push_back(matches_);
+            std::cout << "(" << i << "," << j << ") ---> " << matches_.size() << std::endl;
+
+            //v_.push_back(matches_);
+            v_[j] = matches_;
 
         }
+
+        //mMFeatureMatches_.push_back(v_);
+        mMFeatureMatches_[i] = v_;
+    
     }
+    
+    for(auto &vec: mMFeatureMatches_){
+
+        for(auto mat: vec) {
+            
+            //std::cout << mat << " ";
+            std::cout << mat.size() << " ";
+        }
+
+        std::cout << std::endl;
+
+    }
+    
+    std::cout << "DONE!" << std::endl;
+
 }
 
 std::map<float, ImagePair> simple_sfm::SimpleSFM::sortViewsByHomography(){
 
-    std::map<float, ImagePair> homography_ratio_map_;
+    //std::cout << "Inside sortViewsByHomography!" << std::endl;
 
+    std::map<float, ImagePair> homography_ratio_map_;
     const int n_ = (int)mFrames_.size(); 
+
 
     for(int i = 0 ; i < n_ ; i++) {
 
         for(int j = i + 1; j < n_; j++) {
+            
+            //std::cout << "(i,j): (" << i << "," << j << ")" << std::endl;
 
             int match_sz_ = (int)mMFeatureMatches_[i][j].size();
+            
+            //std::cout << "match_sz_: " << match_sz_  << std::endl;
 
             if(match_sz_ < MIN_POINT_COUNT_FOR_HOMOGRAPHY) {
 
                 homography_ratio_map_[1.0] = ImagePair{i,j};
                 continue;
             }
+
+            //std::cout << "HI" << std::endl;
             
             
             const int inliers_cnt_ = Frame::getHomographyInliersCount(mFeatures_[i], mFeatures_[j], mMFeatureMatches_[i][j]);
 
+            //std::cout << "inliers_cnt_: " << inliers_cnt_ << std::endl;
+
             const double inlier_ratio_ = 1.0 * (double)inliers_cnt_/ (double)mMFeatureMatches_[i][j].size(); 
+
+            //std::cout << "inlier_ratio_: " << inlier_ratio_ << std::endl;
 
             homography_ratio_map_[inlier_ratio_] = ImagePair{i,j};
 
         }
 
     }
-
+    
     return homography_ratio_map_;
 
 }
 
 bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P2_, const ImagePair &img_pair_, Matches &pruned_matches_){
 
+    //std::cout << "Inside findCameraMatrices! " << std::endl;
+
     assert(img_pair_.first < img_pair_.second);
 
     cv::Mat E_, R, t, inlier_mask_;
 
-    const KeyPoints &kp1_ = mFeatures_[img_pair_.first].keypoints;
-    const KeyPoints &kp2_ = mFeatures_[img_pair_.second].keypoints;
-    
-    const Points2d &pts1_ = mFeatures_[img_pair_.first].points;
-    const Points2d &pts2_ = mFeatures_[img_pair_.second].points;
-    
+    const Features &f1_ = mFeatures_[img_pair_.first]; 
+    const Features &f2_ = mFeatures_[img_pair_.second]; 
+    const Matches &matches_ = mMFeatureMatches_[img_pair_.first][img_pair_.second];
 
+    Features f1_mat_, f2_mat_; 
+    std::vector<int> ref_f1_, ref_f2_;
+
+    Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_, ref_f1_, ref_f2_, matches_);
+    
+    const Points2d &pts1_ = f1_mat_.points;
+    const Points2d &pts2_ = f2_mat_.points;
+
+
+    //std::cout << "pts1_.size(): " << pts1_.size() << " pts2_.size(): " << pts2_.size() << std::endl;
+    
     E_ = cv::findEssentialMat(pts1_, pts2_, K_,cv::RANSAC, 0.999, 1.0, inlier_mask_);
-
+    
+    //std::cout << "E_: " << E_ << std::endl;
 
     const int inlier_cnt_ = cv::recoverPose(E_, pts1_, pts2_, K_, R, t, inlier_mask_);
+
+    //std::cout << "inlier_cnt_: " << inlier_cnt_ << std::endl;
 
     if(inlier_cnt_ < POSE_INLIERS_MINIMAL_COUNT) { return false;}
 
@@ -116,7 +175,7 @@ bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34d &P1_ , cv::Matx34d &P
 
     pruned_matches_.resize(0);
 
-    const Matches &matches_ = mMFeatureMatches_[img_pair_.first][img_pair_.second];
+    //const Matches &matches_ = mMFeatureMatches_[img_pair_.first][img_pair_.second];
         
     for(int i = 0 ; i < inlier_mask_.rows; i++) {
 
@@ -135,18 +194,20 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
 
     const int n_ = (int)mFrames_.size(); 
 
+    std::cout << "Inside getBestViewIndexToMerge!" << std::endl;
+    
+    std::cout << "n_: " << n_ << std::endl;
+
     int best_frame_idx_ = -1; 
     int mx_match_cnt_ = -1;
-
     
     for(int i = 0 ; i < n_; i++) {
-
+        
         if(mDoneViews_.find(i) != mDoneViews_.end()) {continue;}
 
         const int curr_view_idx_ = i; 
 
         int match_cnt_ = 0 ; 
-
     
         for(const auto &cloud_pt_: mPointCloud_){
 
@@ -169,17 +230,19 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
 
                 for(const auto &match: matches_){
                     
-                    matching_feature_found_ = ((curr_view_idx_ > pt_view_idx_)  ? (match.trainIdx == pt_view_idx_) : (match.queryIdx == pt_view_idx_));
+                    //matching_feature_found_ = ((curr_view_idx_ > pt_view_idx_)  ? (match.trainIdx == pt_view_idx_) : (match.queryIdx == pt_view_idx_));
+                    matching_feature_found_ = ((curr_view_idx_ > pt_view_idx_)  ? (match.trainIdx == feature_idx_) : (match.queryIdx == feature_idx_));
 
                     if(matching_feature_found_) {
                         
+                        //std::cout << "match found!" << std::endl;
                         match_cnt_++;
                         break;
 
                     }
                 }
 
-                if(matching_feature_found_) {break;}
+                //if(matching_feature_found_) {break;}
             
             }
         }
@@ -190,7 +253,12 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
             best_frame_idx_ = curr_view_idx_;
 
         }
+
+        std::cout << "i: " << i << " match_cnt_: " << match_cnt_ << std::endl;
+    
     }
+
+
 
     if(best_frame_idx_ != -1) {
 
@@ -202,6 +270,8 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
 }
 
 Match2D3D simple_sfm::SimpleSFM::get2D3DMatches(const int view_idx_){
+
+    std::cout << "Inside get2D3DMatches function!" << std::endl;
 
     Match2D3D match_2d3d_;
 
@@ -228,7 +298,7 @@ Match2D3D simple_sfm::SimpleSFM::get2D3DMatches(const int view_idx_){
 
             for(const auto &match: matches_){
                 
-                matching_feature_found_ = ((curr_view_idx_ > pt_view_idx_)  ? (match.trainIdx == pt_view_idx_) : (match.queryIdx == pt_view_idx_));
+                matching_feature_found_ = ((curr_view_idx_ > pt_view_idx_)  ? (match.trainIdx == feature_idx_) : (match.queryIdx == feature_idx_));
 
                 if(matching_feature_found_) {
                     
@@ -236,6 +306,7 @@ Match2D3D simple_sfm::SimpleSFM::get2D3DMatches(const int view_idx_){
                     match_2d3d_.pts_2d_.push_back(mFeatures_[view_idx_].points[match_idx_]);
                     match_2d3d_.pts_3d_.push_back(cloud_pt_.point_);
                     break;
+                
                 }
             }
 
@@ -244,8 +315,9 @@ Match2D3D simple_sfm::SimpleSFM::get2D3DMatches(const int view_idx_){
         }
     }
 
+    std::cout << "match_2d3d.size(): " << match_2d3d_.pts_2d_.size() << std::endl;
 
-
+    return match_2d3d_;
 }
 
 bool simple_sfm::SimpleSFM::updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_pose_, const Match2D3D &match2d3d_){
@@ -265,13 +337,17 @@ bool simple_sfm::SimpleSFM::updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_po
 
     if(inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO) {
 
-        std::cout << "inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO" << std::endl;;
+        //std::cout << "inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO" << std::endl;;
         return false;
 
     }
 
     cv::Mat R_;
     cv::Rodrigues(rvec_, R_);
+
+    const cv::Rect &ROT_    =       cv::Rect(0, 0, 3, 3);
+    const cv::Rect &TRA_    =       cv::Rect(3, 0, 1, 3);
+
     
     R_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(ROT_));
     tvec_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(TRA_));
@@ -360,6 +436,11 @@ void simple_sfm::SimpleSFM::mergeNewPointCloud(std::vector<CloudPoint3d> &pointc
 
 void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
 
+    std::cout << "Inside addMoreViewsToReconstruction!" << std::endl;
+
+    std::cout << "mFrames.size(): " << mFrames_.size() << std::endl;
+    std::cout << "mDoneViews_.size(): " << mDoneViews_.size() << std::endl;
+
     for(int i = 0; i < mFrames_.size(); i++ ) {
 
         if(mDoneViews_.size() == mFrames_.size()) {
@@ -372,16 +453,21 @@ void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
         int best_view_idx_;
         bool success_ = getBestViewIndexToMerge(best_view_idx_);
         
+        std::cout << "success_: " << success_ << std::endl;
+        
         mDoneViews_.insert(best_view_idx_);
-
-        //assert(success_);
 
         if(!success_) {
 
             continue;
         }
+        
+        std::cout << "best_view_idx_: " << best_view_idx_ << std::endl;
 
         Match2D3D match2d3d_ = get2D3DMatches(best_view_idx_);
+
+        std::cout << "match2d3d_pts_2d_.size(): " << match2d3d_.pts_2d_.size() << std::endl;
+        std::cout << "match2d3d_pts_3d_.size(): " << match2d3d_.pts_3d_.size() << std::endl;
         
         assert(match2d3d_.pts_2d_.size() == match2d3d_.pts_3d_.size());
 
@@ -448,6 +534,8 @@ void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
 
 bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::Matx34d &P2_, const ImagePair &img_pair_, std::vector<CloudPoint3d> &pointcloud_){
 
+    //std::cout << "Inside triangulateViews!" << std::endl;
+
     const int i = img_pair_.first ;
     const int j = img_pair_.second; 
 
@@ -466,11 +554,14 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::M
     cv::undistortPoints(f1_mat_.points, normalized_pts_1_, K_, cv::Mat());
     cv::undistortPoints(f2_mat_.points, normalized_pts_2_, K_, cv::Mat());
     
+    
     cv::Mat pts_4d_;
     cv::triangulatePoints(P1_, P2_, normalized_pts_1_, normalized_pts_2_, pts_4d_);
 
+    
     cv::Mat pts_3d_;
     cv::convertPointsFromHomogeneous(pts_4d_.t(), pts_3d_);
+    
     
     cv::Mat rvec1_;
     cv::Rodrigues(P1_.get_minor<3, 3>(0,0), rvec1_);
@@ -480,12 +571,17 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::M
     cv::Mat rvec2_;
     cv::Rodrigues(P2_.get_minor<3, 3>(0,0), rvec2_);
     cv::Mat tvec2_(P2_.get_minor<3,1>(0,3).t());
+
     
     Points2d projected_pts_1_, projected_pts_2_;
     
-    cv::projectPoints(pts_4d_, rvec1_, tvec1_, K_, cv::Mat(), projected_pts_1_);
-    cv::projectPoints(pts_4d_, rvec2_, tvec2_, K_, cv::Mat(), projected_pts_2_);
+    cv::projectPoints(pts_3d_, rvec1_, tvec1_, K_, cv::Mat(), projected_pts_1_);
+    cv::projectPoints(pts_3d_, rvec2_, tvec2_, K_, cv::Mat(), projected_pts_2_);
 
+    //cv::projectPoints(pts_4d_, rvec1_, cv::Mat()_, K_, cv::Mat(), projected_pts_1_);
+    //cv::projectPoints(pts_4d_, rvec2_, cv::Mat(), K_, cv::Mat(), projected_pts_2_);
+
+    
     for(int k = 0; k < pts_3d_.rows; k++){
 
         double d1_ = cv::norm(projected_pts_1_[k] - f1_mat_.points[k]);
@@ -515,7 +611,12 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::M
 void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 
 
+    //std::cout << "Inside InitializeBaselineSFM!" << std::endl;
+
     const std::map<float, ImagePair> homography_ratio_map_  = sortViewsByHomography();
+    
+    //std::cout << "sortViewsByHomography ---- DONE!" << std::endl;
+
     cv::Matx34d P1_, P2_;
     std::vector<CloudPoint3d> pointcloud_;
 
@@ -532,10 +633,14 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
         Matches pruned_matches_;
 
         bool success_ = findCameraMatrices(P1_, P2_, img_pair_, pruned_matches_);
-        
+
+        //std::cout << "success_: " << success_ << std::endl;
+
         if(not success_) {continue;}
         
         const double inlier_ratio_ = 1.0 * (double)pruned_matches_.size() / (double)mMFeatureMatches_[img_pair_.first][img_pair_.second].size();
+
+        //std::cout << "inlier_ratio_: " << inlier_ratio_ << std::endl;
 
         if (inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO) {
 
@@ -547,24 +652,39 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 
         success_ = triangulateViews(P1_, P2_, img_pair_, pointcloud_);
 
+        //std::cout << "success_ after triangulateViews: " << success_ << std::endl;
+
         if(not success_) {continue;}
 
+        mCameraPoses_.resize(mFrames_.size());
+        
         mCameraPoses_[i] = P1_; 
         mCameraPoses_[j] = P2_;
+        
 
-        mDoneViews_.insert(i);
+
+
+        mDoneViews_.insert(i);        
+        std::cout << "mDoneViews.size(): " << (int)mDoneViews_.size() << std::endl;
+        
         mDoneViews_.insert(j);
-
+        std::cout << "mDoneViews.size(): "<< (int)mDoneViews_.size() << std::endl;
+        
         mGoodViews_.insert(i);
         mGoodViews_.insert(j);
 
         mPointCloud_ = pointcloud_;
 
+        break;
+
     }
-    
+
+    std::cout << "DONE!" << std::endl;
 }
 
 void simple_sfm::SimpleSFM::runSFMPipeline() {
+
+    //std::cout << "Inside runSFMPipeline!" << std::endl;
 
     createFeatureMatrix();
 
@@ -576,88 +696,19 @@ void simple_sfm::SimpleSFM::runSFMPipeline() {
 
 }
 
-
-
-/*void simple_sfm::SimpleSFM::runBundleAdjust(int se_, int en_){
-
-    std::cout << "Inside runBundleAdjustment function!" << std::endl;
-
-    std::cout << "se: " << se_ << " en_: " << en_ << std::endl;
-
-    ceres::Problem::Options problem_options;
-    ceres::Problem problem(problem_options);
-        
-    //int n_ = (int)views_.size(); 
-
-    //n_ = 20;
-
-    int unused_cnt_ = 0 ;
-
-    
-    for(int i = 1 ; i <= en_; i++){
-        
-        if(views_[i] == nullptr){
-
-            continue;
-
-        }
-        
-        std::shared_ptr<View> view_(views_[i]);
-        
-        assert(view_->pts_2d_->size() == view_->indices_3d_pts_->size());
-
-        int m_ = (int)view_->pts_2d_->size();
-
-        Mat3d intrinsics_ = view_->cam_intrinsics_;
-        Vec6d &extrinsics_ = view_->cam_extrinsics_;
-
-        //std::cout << "index: " << i << std::endl;
-        //std::cout << "extrinsics_: " << extrinsics_ << std::endl;
-        
-        for(int j = 0 ; j < m_; j++) {
-            
-            float x_= view_->pts_2d_->at(j)[0];
-            float y_= view_->pts_2d_->at(j)[1];
-
-            Vec3d &pt_ = View::point_cloud_[view_->indices_3d_pts_->at(j)];
-            
-            ceres::CostFunction* cost_function = ReprojectionError::create(x_, y_, intrinsics_);
-            
-            problem.AddResidualBlock(cost_function, NULL, &extrinsics_(0), &pt_(0));
-
-        }
-    }
-
-    ceres::Solver::Options options;
-    options.use_nonmonotonic_steps = true;
-    options.preconditioner_type = ceres::SCHUR_JACOBI;
-    options.linear_solver_type = ceres::ITERATIVE_SCHUR;
-    options.use_inner_iterations = true;
-    options.max_num_iterations = 100;
-    options.minimizer_progress_to_stdout = true;
-
-    ceres::Solver::Summary summary;
-    ceres::Solve(options, &problem, &summary);
-    std::cout << summary.BriefReport() << std::endl;
-
-    //std::cout << "After BA" << std::endl;
-
-    for(int i = se_; i <= en_; i++) {
-
-        if(views_[i] == nullptr) {continue;}
-        std::shared_ptr<View> view_(views_[i]);
-
-        cv::Matx44d ext_mat_ = unpackCameraExtrinsics(view_->cam_extrinsics_);
-        Vis::updateBAPose(cv::Mat(ext_mat_));
-        
-        
-    }
-}*/
-
 void simple_sfm::SimpleSFM::updateIOParams() 
 {
 
     io_->getImageFileNames(mFrames_);
+
+    while(mFrames_.size() > 5) {
+
+        mFrames_.pop_back();
+
+    }
+
+    std::cout << "mFrames.size(): " << mFrames_.size() << std::endl;
+    
     io_->getGTPoses(gt_poses_);
     
     P_prev_ = io_->getP0();

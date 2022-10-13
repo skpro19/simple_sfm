@@ -17,6 +17,8 @@ void simple_sfm::Frame::alignFeaturesUsingMatches(  const Features &f1_, const F
                                                     const Matches &matches_) {
 
     //Features f1_mat_, f2_mat_;
+
+    //std::cout << "Inside alignFeaturesUsingMatches!" << std::endl;
     
     f1_mat_.keypoints.resize(0); 
     f2_mat_.keypoints.resize(0); 
@@ -27,9 +29,13 @@ void simple_sfm::Frame::alignFeaturesUsingMatches(  const Features &f1_, const F
     ref_f1_.resize(0);
     ref_f2_.resize(0);
 
+    //std::cout << "f1_.size(): " << f1_.keypoints.size() << std::endl;
 
     for(int i = 0 ;i  < (int)matches_.size(); i++) {
 
+        //std::cout << "i: " << i << std::endl;
+
+        //std::cout << f1_.keypoints[matches_[i].queryIdx].pt << std::endl;
         f1_mat_.keypoints.push_back(f1_.keypoints[matches_[i].queryIdx]);
         f2_mat_.keypoints.push_back(f2_.keypoints[matches_[i].trainIdx]);
         
@@ -41,6 +47,7 @@ void simple_sfm::Frame::alignFeaturesUsingMatches(  const Features &f1_, const F
 
     }
 
+   // std::cout  <<"exiting alignFeaturesUsingMatches!" << std::endl;
 
 }
 
@@ -49,6 +56,10 @@ int simple_sfm::Frame::getHomographyInliersCount(const Features &f1_, const Feat
     Features f1_mat_, f2_mat_;
     std::vector<int> ref_f1_, ref_f2_;
     
+    //std::cout << "f1_.size(): " << f1_.keypoints.size() << std::endl;
+    //std::cout << "f1_.size(): " << f1_.points.size() << std::endl;
+    //std::cout << "f1_.size(): " << f1_.descriptors.size() << std::endl;
+
     Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_, ref_f1_, ref_f2_, matches_);
 
     assert(f1_mat_.keypoints.size()  == matches_.size());
@@ -116,7 +127,7 @@ Matches simple_sfm::Frame::getMatches(const Features &f1_, const Features &f2_){
 
 void simple_sfm::Frame::keypointsToPoints(Features &f_){
 
-    f_.keypoints.resize(0);
+    f_.points.resize(0);
 
     for(const auto &kp_: f_.keypoints) {
 
@@ -142,6 +153,8 @@ void simple_sfm::Frame::extractFeaturesAndDescriptors(const cv::Mat &img_, Featu
     cv::Ptr<cv::ORB>orb_ = cv::ORB::create(5000);
 
     orb_->detectAndCompute(image_, mask, features_.keypoints, features_.descriptors);
+
+    //std::cout << "features_.keypoints.size(): " << features_.keypoints.size() << std::endl;
         
     features_.descriptors.convertTo(features_.descriptors, 0);
 

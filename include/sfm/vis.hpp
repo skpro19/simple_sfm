@@ -7,6 +7,7 @@
 //  ===========================================================================
 
 /*
+
 #include "ds.hpp"
 #include <opencv2/viz/types.hpp>
 
@@ -32,7 +33,7 @@ namespace simple_sfm {
 
         private:
 
-            static inline cv::Mat gt_mat_ = cv::Mat::zeros(1000, 1000, CV_8UC3);
+            static inline cv::Mat  = cv::Mat::zeros(1000, 1000, CV_8UC3);
             static inline cv::Mat pred_mat_ = cv::Mat::zeros(1000, 1000, CV_8UC3);
             
            
@@ -41,8 +42,8 @@ namespace simple_sfm {
 
 };
 
-*/
 
+*/
 
 #endif
 
