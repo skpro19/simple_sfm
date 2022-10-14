@@ -21,7 +21,7 @@ using ImagePair         =       std::pair<int, int>;
 
 const int       MIN_POINT_COUNT_FOR_HOMOGRAPHY          =   100;
 //const int       MIN_POINT_COUNT_FOR_2D3DMATCH           =   30;
-const int       MIN_POINT_COUNT_FOR_2D3DMATCH           =   10;
+const int       MIN_POINT_COUNT_FOR_2D3DMATCH           =   1;
 const double    POSE_INLIERS_MINIMAL_RATIO              =   0.5;
 const double    POSE_INLIERS_MINIMAL_COUNT              =   25;
 const double    MIN_REPROJECTION_ERROR                  =   10.0;

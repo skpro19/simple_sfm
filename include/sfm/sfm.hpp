@@ -9,18 +9,13 @@
 //#include "vis.hpp"
 #include "frame.hpp"
 #include "io.hpp"
+#include "vis.hpp"
+
 #include <ceres/cost_function.h>
-//#include <opencv2/core/eigen.hpp>
-
-
+#include <thread>
+#include <mutex>
+    
 namespace simple_sfm{
-
-    
-    
-
-    
-
-
 
     class SimpleSFM{
 
@@ -29,12 +24,9 @@ namespace simple_sfm{
             SimpleSFM(const std::string &base_folder_);
 
 
-            void updateIOParams();
-            
-
+            void updateIOParams();            
             void runSFMPipeline();
-            
-            
+            void createFeatureMatchMatrixThreaded();            
 
             void createFeatureMatrix();
             void createFeatureMatchMatrix();

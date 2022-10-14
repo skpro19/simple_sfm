@@ -11,6 +11,10 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
    
     updateIOParams();
 
+    //const int numThreads = std::thread::hardware_concurrency() - 1;
+    
+    //std::cout << "numThreads: " << numThreads << std::endl;
+
     //ceres::Problem::Options problem_options_;
     //ceres::Problem problem(problem_options_);
 
@@ -85,7 +89,7 @@ void simple_sfm::SimpleSFM::createFeatureMatchMatrix(){
 
     }
     
-    std::cout << "DONE!" << std::endl;
+    //std::cout << "DONE!" << std::endl;
 
 }
 
@@ -194,9 +198,9 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
 
     const int n_ = (int)mFrames_.size(); 
 
-    std::cout << "Inside getBestViewIndexToMerge!" << std::endl;
+    //std::cout << "Inside getBestViewIndexToMerge!" << std::endl;
     
-    std::cout << "n_: " << n_ << std::endl;
+    //std::cout << "n_: " << n_ << std::endl;
 
     int best_frame_idx_ = -1; 
     int mx_match_cnt_ = -1;
@@ -254,7 +258,7 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
 
         }
 
-        std::cout << "i: " << i << " match_cnt_: " << match_cnt_ << std::endl;
+       // std::cout << "i: " << i << " match_cnt_: " << match_cnt_ << std::endl;
     
     }
 
@@ -263,6 +267,7 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
     if(best_frame_idx_ != -1) {
 
         idx_ = best_frame_idx_ ;
+        std::cout << "best_idx_: " << best_frame_idx_ << " mx_cnt_: " << mx_match_cnt_ << std::endl;
         return true;
     }
 
@@ -271,7 +276,7 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
 
 Match2D3D simple_sfm::SimpleSFM::get2D3DMatches(const int view_idx_){
 
-    std::cout << "Inside get2D3DMatches function!" << std::endl;
+   // std::cout << "Inside get2D3DMatches function!" << std::endl;
 
     Match2D3D match_2d3d_;
 
@@ -315,12 +320,76 @@ Match2D3D simple_sfm::SimpleSFM::get2D3DMatches(const int view_idx_){
         }
     }
 
-    std::cout << "match_2d3d.size(): " << match_2d3d_.pts_2d_.size() << std::endl;
+    //std::cout << "match_2d3d.size(): " << match_2d3d_.pts_2d_.size() << std::endl;
 
     return match_2d3d_;
 }
 
+
+void simple_sfm::SimpleSFM::createFeatureMatchMatrixThreaded() {
+    
+    const size_t numImages = mFrames_.size();
+    
+    mMFeatureMatches_.resize(numImages, std::vector<Matches>(numImages));
+
+    std::vector<ImagePair> pairs;
+    for (size_t i = 0; i < numImages; i++) {
+        for (size_t j = i + 1; j < numImages; j++) {
+            pairs.push_back({ i, j });
+        }
+    }
+
+    std::vector<std::thread> threads;
+
+    //mMFeatureMatches_
+
+    const int numThreads = std::thread::hardware_concurrency() - 1;
+    
+    std::cout << "************ num_threads: " << numThreads << "********************" << std::endl;
+    
+    const int numPairsForThread = (numThreads > pairs.size()) ? 1 : (int)ceilf((float)(pairs.size()) / numThreads);
+
+    std::mutex writeMutex;
+
+    
+    for (size_t threadId = 0; threadId < MIN(numThreads, pairs.size()); threadId++) {
+        
+        threads.push_back(std::thread([&, threadId] {
+
+            const int startingPair = numPairsForThread * threadId;
+
+            for (int j = 0; j < numPairsForThread; j++) {
+                
+                const int pairId = startingPair + j;
+                if (pairId >= pairs.size()) { //make sure threads don't overflow the pairs
+                    break;
+                }
+                
+                const ImagePair& pair = pairs[pairId];
+                
+                mMFeatureMatches_[pair.first][pair.second] = Frame::getMatches(mFeatures_[pair.first], mFeatures_[pair.second]);
+
+                if (0 <= 1) {
+                    writeMutex.lock();
+                    std::cout << "Thread " << threadId << ": Match (pair " << pairId << ") " << pair.first << ", " << pair.second << ": " << mMFeatureMatches_[pair.first][pair.second].size() << " matched features" << std::endl;
+                    writeMutex.unlock();
+                }
+            }
+        }));
+    }
+
+    //wait for threads to complete
+    for (auto& t : threads) {
+        t.join();
+    }
+}
+
+
 bool simple_sfm::SimpleSFM::updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_pose_, const Match2D3D &match2d3d_){
+    
+    //std::cout << "Inside getBestViewIndexToMerge!" << std::endl;
+    
+    //std::cout << "n_: " << n_ << std::endl;
 
     bool success_ = false;
 
@@ -329,9 +398,15 @@ bool simple_sfm::SimpleSFM::updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_po
     
     success_ = cv::solvePnPRansac(match2d3d_.pts_3d_, match2d3d_.pts_2d_, K_, cv::Mat(), rvec_, tvec_,false,100,8.0, 0.99, inliers_);
 
+    //std::cout << "match2d3d_pts_.size(): " << match2d3d_.pts_3d_.size() << std::endl;
+    std::cout << "pts_2d.size(): " << match2d3d_.pts_2d_.size() << std::endl;
+    std::cout << "inliers_cnt_: " << cv::countNonZero(inliers_) << std::endl;
+
+    std::cout << "success_: " << success_ << std::endl;
+
     if(!success_) {return success_; }
 
-    assert(inliers_.rows != match2d3d_.pts_2d_.size());
+   // assert(inliers_.rows != match2d3d_.pts_2d_.size());
 
     const double inlier_ratio_ = (1.0) * ((double)inliers_.rows/ (double)match2d3d_.pts_2d_.size());
 
@@ -351,6 +426,9 @@ bool simple_sfm::SimpleSFM::updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_po
     
     R_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(ROT_));
     tvec_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(TRA_));
+
+    std::cout << "Trying to visualize camera_pose!" << std::endl;
+    Vis::updatePredictedPose(cv::Mat(camera_pose_));
     
     return true;
     
@@ -438,8 +516,8 @@ void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
 
     std::cout << "Inside addMoreViewsToReconstruction!" << std::endl;
 
-    std::cout << "mFrames.size(): " << mFrames_.size() << std::endl;
-    std::cout << "mDoneViews_.size(): " << mDoneViews_.size() << std::endl;
+    //std::cout << "mFrames.size(): " << mFrames_.size() << std::endl;
+    //std::cout << "mDoneViews_.size(): " << mDoneViews_.size() << std::endl;
 
     for(int i = 0; i < mFrames_.size(); i++ ) {
 
@@ -453,7 +531,7 @@ void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
         int best_view_idx_;
         bool success_ = getBestViewIndexToMerge(best_view_idx_);
         
-        std::cout << "success_: " << success_ << std::endl;
+        //std::cout << "success_: " << success_ << std::endl;
         
         mDoneViews_.insert(best_view_idx_);
 
@@ -462,12 +540,12 @@ void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
             continue;
         }
         
-        std::cout << "best_view_idx_: " << best_view_idx_ << std::endl;
+       // std::cout << "best_view_idx_: " << best_view_idx_ << std::endl;
 
         Match2D3D match2d3d_ = get2D3DMatches(best_view_idx_);
 
-        std::cout << "match2d3d_pts_2d_.size(): " << match2d3d_.pts_2d_.size() << std::endl;
-        std::cout << "match2d3d_pts_3d_.size(): " << match2d3d_.pts_3d_.size() << std::endl;
+        //std::cout << "match2d3d_pts_2d_.size(): " << match2d3d_.pts_2d_.size() << std::endl;
+        //std::cout << "match2d3d_pts_3d_.size(): " << match2d3d_.pts_3d_.size() << std::endl;
         
         assert(match2d3d_.pts_2d_.size() == match2d3d_.pts_3d_.size());
 
@@ -688,8 +766,9 @@ void simple_sfm::SimpleSFM::runSFMPipeline() {
 
     createFeatureMatrix();
 
-    createFeatureMatchMatrix();
-    
+    //createFeatureMatchMatrix();
+    createFeatureMatchMatrixThreaded();
+
     initializeBaselineSFM();
         
     addMoreViewsToReconstruction();
@@ -701,7 +780,7 @@ void simple_sfm::SimpleSFM::updateIOParams()
 
     io_->getImageFileNames(mFrames_);
 
-    while(mFrames_.size() > 5) {
+    while(mFrames_.size() > 25) {
 
         mFrames_.pop_back();
 

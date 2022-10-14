@@ -8,6 +8,8 @@ find_package(Boost COMPONENTS system REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
 # find_package(Eigen3 REQUIRED)
 # include_directories(EIGEN3_INCLUDE_DIR)
 
@@ -23,6 +25,7 @@ add_executable(simple_sfm
     src/sfm/sfm.cpp
     src/sfm/io.cpp
     src/sfm/frame.cpp
+    src/sfm/vis.cpp
 
     # src/sfm/vis.cpp
 )
