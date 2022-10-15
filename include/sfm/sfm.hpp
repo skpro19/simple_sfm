@@ -74,6 +74,7 @@ namespace simple_sfm{
             void match_features(const cv::Mat &img_1, const cv::Mat &img_2);
             double getScale(int curr_idx_, int prev_idx_);
 
+            int camera_cnt_ = 0 ;
             //std::vector<std::shared_ptr<View> > views_;
             
             //std::vector<std::shared_ptr<Mat34f> >cam_extrinsics_;

@@ -36,8 +36,7 @@ void simple_sfm::Vis::updatePredictedPose(const cv::Mat &pose_)
     double x_ = pose_.at<double>(0, 3) + 200 , y_ = pose_.at<double>(2, 3) + 100;
 
     cv::Point p_(x_, y_);
-
-    cv::circle(Vis::gt_mat_, p_ ,1, cv::viz::Color::white(), 1);
+    cv::circle(Vis::gt_mat_, p_ ,1, cv::viz::Color::white(), 5);
     cv::imshow("gt_", Vis::gt_mat_);
     cv::waitKey(0);
 
