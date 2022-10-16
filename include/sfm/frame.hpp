@@ -30,7 +30,7 @@ namespace simple_sfm{
             
             
 
-            static void extractFeaturesAndDescriptors(const cv::Mat &img_, Features &features_);
+            static Features extractFeaturesAndDescriptors(const cv::Mat &img_);
             static void keypointsToPoints(Features &f_);
             static Matches getMatches(const Features &f1_, const Features &f2_);
 
@@ -42,13 +42,10 @@ namespace simple_sfm{
                                                     const Matches &matches_) ;
         private:
 
-            //static inline cv::Ptr<cv::ORB>  orb_ = cv::ORB::create(5000);
-
-            //TODO ----> TUNE
-            static inline int multiplier_ = 10;
+            static inline cv::Ptr<cv::ORB>  orb_ = cv::ORB::create(5000);
+            static inline cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
             
-            //static std::set<int>  train_set_, query_set_;
-
+            
     } ;   
 
 

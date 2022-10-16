@@ -7,7 +7,8 @@
 
 simple_sfm::Frame::Frame() {
     
-   // Frame::orb_ = cv::ORB::create(5000);
+    //Frame::orb_ = cv::ORB::create(5000);
+    //Frame::matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
 
 }
 
@@ -16,16 +17,16 @@ void simple_sfm::Frame::alignFeaturesUsingMatches(  const Features &f1_, const F
                                                     std::vector<int> &ref_f1_, std::vector<int> &ref_f2_,
                                                     const Matches &matches_) {
 
-    //Features f1_mat_, f2_mat_;
-
-    //std::cout << "Inside alignFeaturesUsingMatches!" << std::endl;
-    
+     
     f1_mat_.keypoints.resize(0); 
     f2_mat_.keypoints.resize(0); 
 
     f1_mat_.points.resize(0); 
     f2_mat_.points.resize(0); 
 
+    f1_mat_.descriptors = cv::Mat();
+    f2_mat_.descriptors = cv::Mat();
+    
     ref_f1_.resize(0);
     ref_f2_.resize(0);
 
@@ -33,14 +34,14 @@ void simple_sfm::Frame::alignFeaturesUsingMatches(  const Features &f1_, const F
 
     for(int i = 0 ;i  < (int)matches_.size(); i++) {
 
-        //std::cout << "i: " << i << std::endl;
-
-        //std::cout << f1_.keypoints[matches_[i].queryIdx].pt << std::endl;
         f1_mat_.keypoints.push_back(f1_.keypoints[matches_[i].queryIdx]);
         f2_mat_.keypoints.push_back(f2_.keypoints[matches_[i].trainIdx]);
         
         f1_mat_.points.push_back(f1_.points[matches_[i].queryIdx]);
         f2_mat_.points.push_back(f2_.points[matches_[i].trainIdx]);
+
+        f1_mat_.descriptors.push_back(f1_.descriptors.row(matches_[i].queryIdx));
+        f2_mat_.descriptors.push_back(f2_.descriptors.row(matches_[i].trainIdx));
 
         ref_f1_.push_back(matches_[i].queryIdx);
         ref_f2_.push_back(matches_[i].trainIdx);
@@ -81,46 +82,30 @@ int simple_sfm::Frame::getHomographyInliersCount(const Features &f1_, const Feat
 }
 
 
-
-double simple_sfm::Frame::getScale(const cv::Mat &prev_poses_, const cv::Mat &curr_poses_) {
-
-    cv::Point3d prev_point_ = {prev_poses_.at<double>(0,3), prev_poses_.at<double>(1,3), prev_poses_.at<double>(2,3)};
-    cv::Point3d curr_point_ = {curr_poses_.at<double>(0,3), curr_poses_.at<double>(1,3), curr_poses_.at<double>(2,3)};
-    cv::Point3d diff_ = (curr_point_ - prev_point_);
-
-    double scale_ = cv::norm(diff_);
-    
-    return scale_;
-}
-
-
 Matches simple_sfm::Frame::getMatches(const Features &f1_, const Features &f2_){
 
-    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
-
-    std::vector<cv::DMatch> brute_hamming_matches;
-    matcher->match(f1_.descriptors, f2_.descriptors, brute_hamming_matches);
-
-    double min_dist=10000, max_dist=0;
-
-    for ( int i = 0; i < f1_.descriptors. rows; i++ )
-    {
-        double dist = brute_hamming_matches[i].distance;
-        if ( dist < min_dist ) min_dist = dist;
-        if ( dist > max_dist ) max_dist = dist;
-    }
-
-    Matches good_matches;
+    //std::cout << "f1_.d.size(): " << f1_.descriptors.size() << " f2_.d.size(): " << f2_.descriptors.size() << std::endl;
+    //std::cout << "f1_.k.size(): " << f1_.keypoints.size() << " f2_.k.size(): " << f2_.keypoints.size() << std::endl;
+    //std::cout << "f1_.p.size(): " << f1_.points.size() << " f2_.p.size(): " << f2_.points.size() << std::endl;
     
-    for ( int i = 0; i < f1_.descriptors.rows; i++ )
-    {
-        if ( brute_hamming_matches[i].distance <= std::max( 2*min_dist, 20.0 ) )
-        {
-            good_matches.push_back (brute_hamming_matches[i]);
+    //cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
+
+    std::vector<Matches> brute_hamming_matches;
+    
+    Frame::matcher->knnMatch(f1_.descriptors, f2_.descriptors, brute_hamming_matches,  2);
+
+    //std::cout << "H1" << std::endl;
+    //std::cout << "matches.size(): " << brute_hamming_matches.size() << std::endl;
+
+    Matches good_matches_;
+    
+    for(unsigned i = 0; i < brute_hamming_matches.size(); i++) {
+        if(brute_hamming_matches[i][0].distance < 0.8 * brute_hamming_matches[i][1].distance) {
+            good_matches_.push_back(brute_hamming_matches[i][0]);
         }
     }
 
-    return good_matches;
+    return good_matches_;
 
 }
 
@@ -139,8 +124,9 @@ void simple_sfm::Frame::keypointsToPoints(Features &f_){
 }
 
 
-void simple_sfm::Frame::extractFeaturesAndDescriptors(const cv::Mat &img_, Features &features_){
-    
+Features simple_sfm::Frame::extractFeaturesAndDescriptors(const cv::Mat &img_){
+
+    Features features_;    
     features_.descriptors.resize(0);
     features_.keypoints.resize(0);
     features_.points.resize(0);
@@ -150,14 +136,14 @@ void simple_sfm::Frame::extractFeaturesAndDescriptors(const cv::Mat &img_, Featu
     
     cv::Mat mask = cv::Mat();
     
-    cv::Ptr<cv::ORB>orb_ = cv::ORB::create(5000);
+    //cv::Ptr<cv::ORB>orb_ = cv::ORB::create(5000);
+    Frame::orb_ = cv::ORB::create(5000);
 
-    orb_->detectAndCompute(image_, mask, features_.keypoints, features_.descriptors);
+    Frame::orb_->detectAndCompute(image_, mask, features_.keypoints, features_.descriptors);
 
-    //std::cout << "features_.keypoints.size(): " << features_.keypoints.size() << std::endl;
-        
-    features_.descriptors.convertTo(features_.descriptors, 0);
-
+    Frame::keypointsToPoints(features_);
+    
+    return features_;
 }
 
 
