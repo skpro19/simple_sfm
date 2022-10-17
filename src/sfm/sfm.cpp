@@ -109,16 +109,9 @@ std::map<float, ImagePair> simple_sfm::SimpleSFM::sortViewsByHomography(){
                 continue;
             }
 
-            //std::cout << "HI" << std::endl;
-            
-            
             const int inliers_cnt_ = Frame::getHomographyInliersCount(mFeatures_[i], mFeatures_[j], mMFeatureMatches_[i][j]);
 
-            //std::cout << "inliers_cnt_: " << inliers_cnt_ << std::endl;
-
             const double inlier_ratio_ = 1.0 * (double)inliers_cnt_/ (double)mMFeatureMatches_[i][j].size(); 
-
-            //std::cout << "inlier_ratio_: " << inlier_ratio_ << std::endl;
 
             homography_ratio_map_[inlier_ratio_] = ImagePair{i,j};
 
@@ -239,7 +232,7 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
                     }
                 }
 
-                //if(matching_feature_found_) {break;}
+                if(matching_feature_found_) {break;}
             
             }
         }
@@ -251,11 +244,11 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
 
         }
 
-       // std::cout << "i: " << i << " match_cnt_: " << match_cnt_ << std::endl;
-    
+        
     }
 
-
+    std::cout << "best_idx_: " << best_frame_idx_ << " match_cnt_: " << mx_match_cnt_ << std::endl;
+    
 
     if(best_frame_idx_ != -1) {
 
@@ -269,7 +262,6 @@ bool simple_sfm::SimpleSFM::getBestViewIndexToMerge(int &idx_){
 
 Match2D3D simple_sfm::SimpleSFM::get2D3DMatches(const int view_idx_){
 
-   // std::cout << "Inside get2D3DMatches function!" << std::endl;
 
     Match2D3D match_2d3d_;
 
@@ -398,14 +390,17 @@ bool simple_sfm::SimpleSFM::updateCameraPoseFrom2D3DMatch(cv::Matx34d &camera_po
 
     //std::cout << "match2d3d_pts_.size(): " << match2d3d_.pts_3d_.size() << std::endl;
     //std::cout << "pts_2d.size(): " << match2d3d_.pts_2d_.size() << std::endl;
-    std::cout << "inliers_cnt_: " << cv::countNonZero(inliers_) << std::endl;
-    std::cout << "success_: " << success_ << std::endl;
+    //std::cout << "inliers_cnt_: " << cv::countNonZero(inliers_) << std::endl;
+    //std::cout << "success_: " << success_ << std::endl;
 
     if(!success_) {return success_; }
 
    // assert(inliers_.rows != match2d3d_.pts_2d_.size());
 
-    const double inlier_ratio_ = (1.0) * ((double)inliers_.rows/ (double)match2d3d_.pts_2d_.size());
+    //const double inlier_ratio_ = (1.0) * ((double)inliers_.rows/ (double)match2d3d_.pts_2d_.size());
+    
+    //const double inlier_ratio_ = (1.0) * ((double)inliers_.rows/ (double)match2d3d_.pts_2d_.size());
+    const double inlier_ratio_ = (1.0) * ((double)cv::countNonZero(inliers_)/ (double)match2d3d_.pts_2d_.size());
     
     std::cout << "inliers_ratio_: " << inlier_ratio_ << std::endl;
 
@@ -547,7 +542,7 @@ void simple_sfm::SimpleSFM::addMoreViewsToReconstruction(){
         int best_view_idx_;
         bool success_ = getBestViewIndexToMerge(best_view_idx_);
         
-        //std::cout << "success_: " << success_ << std::endl;
+        std::cout << "success_: " << success_ << std::endl;
         
         mDoneViews_.insert(best_view_idx_);
 
@@ -650,19 +645,19 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::M
     const Features &f2_ = mFeatures_[j]; 
     const Matches &matches_ = mMFeatureMatches_[i][j];
 
-    std::cout << "f1_.kp.size(): " << f1_.keypoints.size() << " f2_.kp.size(): " << f2_.keypoints.size() << std::endl;
-    std::cout << "f1_.p.size(): " << f1_.points.size() << " f2_.p.size(): " << f2_.points.size() << std::endl;
-    std::cout << "f1_.des.size(): " << f1_.descriptors.size() << " f2_.des.size(): " << f2_.descriptors.size() << std::endl;
+    //std::cout << "f1_.kp.size(): " << f1_.keypoints.size() << " f2_.kp.size(): " << f2_.keypoints.size() << std::endl;
+    //std::cout << "f1_.p.size(): " << f1_.points.size() << " f2_.p.size(): " << f2_.points.size() << std::endl;
+   // std::cout << "f1_.des.size(): " << f1_.descriptors.size() << " f2_.des.size(): " << f2_.descriptors.size() << std::endl;
 
 
     Features f1_mat_, f2_mat_;
     std::vector<int> ref_f1_, ref_f2_;
     Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_,ref_f1_, ref_f2_,  matches_);
 
-    std::cout << "f1_mat_.kp.size(): " << f1_mat_.keypoints.size() << " f2_mat_.kp.size(): " << f2_mat_.keypoints.size() << std::endl;
+    /*std::cout << "f1_mat_.kp.size(): " << f1_mat_.keypoints.size() << " f2_mat_.kp.size(): " << f2_mat_.keypoints.size() << std::endl;
     std::cout << "f1_mat_.p.size(): " << f1_mat_.points.size() << " f2_mat_.p.size(): " << f2_mat_.points.size() << std::endl;
     std::cout << "f1_mat_.des.size(): " << f1_mat_.descriptors.size() << " f2_mat_.des.size(): " << f2_mat_.descriptors.size() << std::endl;
-
+    */
     cv::Mat normalized_pts_1_, normalized_pts_2_;
 
     cv::undistortPoints(f1_mat_.points, normalized_pts_1_, K_, cv::Mat());
@@ -695,14 +690,15 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::M
     //cv::projectPoints(pts_4d_, rvec1_, cv::Mat()_, K_, cv::Mat(), projected_pts_1_);
     //cv::projectPoints(pts_4d_, rvec2_, cv::Mat(), K_, cv::Mat(), projected_pts_2_);
 
-    
+    int rejected_3d_pts_cnt_ = 0 ;
     for(int k = 0; k < pts_3d_.rows; k++){
 
         double d1_ = cv::norm(projected_pts_1_[k] - f1_mat_.points[k]);
         double d2_ = cv::norm(projected_pts_2_[k] - f2_mat_.points[k]);
 
         if(d1_ > MIN_REPROJECTION_ERROR or d2_ > MIN_REPROJECTION_ERROR){
-
+            
+            rejected_3d_pts_cnt_++;
             continue;
 
         }
@@ -718,6 +714,9 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::M
 
     }
     
+    std::cout << rejected_3d_pts_cnt_ << " pts were rejected while triangulation!" << std::endl;
+    std::cout << "total_pts_: " << pts_3d_.rows << std::endl;
+
     return true;
     
 }
@@ -725,7 +724,7 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::M
 void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 
 
-    //std::cout << "Inside InitializeBaselineSFM!" << std::endl;
+    std::cout << "Inside InitializeBaselineSFM!" << std::endl;
         
     const std::map<float, ImagePair> homography_ratio_map_  = sortViewsByHomography();
     
@@ -740,8 +739,9 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
         const float ratio_ = elem_.first;
         const ImagePair &img_pair_  = elem_.second;
 
-        std::cout << "img_pair for initialization: (" << img_pair_.first << "," << img_pair_.second <<")" << std::endl; 
+        ///std::cout << "img_pair for initialization: (" << img_pair_.first << "," << img_pair_.second <<")" << std::endl; 
 
+        std::cout << "ratio_: " << elem_.first << " img_pair: (" << img_pair_.first << "," << img_pair_.second <<")" << std::endl;
 
         assert(img_pair_.first < img_pair_.second);
 
@@ -752,19 +752,29 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
 
         bool success_ = findCameraMatrices(P1_, P2_, img_pair_, pruned_matches_);
 
-        //std::cout << "success_: " << success_ << std::endl;
+        std::cout << "success_: " << success_ << std::endl;
 
         if(not success_) {continue;}
         
         const double inlier_ratio_ = 1.0 * (double)pruned_matches_.size() / (double)mMFeatureMatches_[img_pair_.first][img_pair_.second].size();
 
-        //std::cout << "inlier_ratio_: " << inlier_ratio_ << std::endl;
+        std::cout << "inlier_ratio_: " << inlier_ratio_ << std::endl;
 
         if (inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO) {
 
             success_ = false;
             continue;
         }
+
+        cv::Mat a_ = cv::imread(mFrames_[i].c_str());
+        cv::Mat b_ = cv::imread(mFrames_[j].c_str());
+        cv::Mat out_img_;
+
+        cv::drawMatches(a_, mFeatures_[i].keypoints, b_, mFeatures_[j].keypoints, pruned_matches_, out_img_);
+        cv::resize(out_img_, out_img_, cv::Size(), 0.5, 0.5);
+        cv::imshow("outimage", out_img_);
+        cv::waitKey(0);
+    
 
         mMFeatureMatches_[img_pair_.first][img_pair_.second] = pruned_matches_;
 
@@ -781,15 +791,10 @@ void simple_sfm::SimpleSFM::initializeBaselineSFM(){
         
         mCameraPoses_[i] = P1_; 
         mCameraPoses_[j] = P2_;
+
         
-
-
-
         mDoneViews_.insert(i);        
-        //std::cout << "mDoneViews.size(): " << (int)mDoneViews_.size() << std::endl;
-        
         mDoneViews_.insert(j);
-        //std::cout << "mDoneViews.size(): "<< (int)mDoneViews_.size() << std::endl;
         
         mGoodViews_.insert(i);
         mGoodViews_.insert(j);
