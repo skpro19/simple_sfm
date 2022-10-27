@@ -17,6 +17,21 @@ void simple_sfm::Vis::displayFrame(const cv::Mat &frame_)
     
 }
 
+void simple_sfm::Vis::visualizePointCloud(const std::vector<CloudPoint3d> &pointcloud_) {
+    
+
+    for(const auto point_: pointcloud_){
+
+        const cv::Point2d &pt_ = {point_.point_.x, point_.point_.y};
+
+        cv::circle(Vis::gt_mat_, pt_ ,1, cv::viz::Color::green(), 1);
+
+    }
+
+    cv::waitKey(0);
+
+}
+
 void simple_sfm::Vis::updateGroundPose(const cv::Matx34d &pose_)
 {
 

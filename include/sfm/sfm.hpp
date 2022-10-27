@@ -14,6 +14,8 @@
 #include <ceres/cost_function.h>
 #include <thread>
 #include <mutex>
+
+const int K_ = 20; //window size
     
 namespace simple_sfm{
 

@@ -28,6 +28,7 @@ const double    MIN_REPROJECTION_ERROR                  =   10.0;
 const double    MERGE_CLOUD_POINT_MIN_MATCH_DISTANCE    =   0.01;
 const double    MERGE_CLOUD_FEATURE_MIN_MATCH_DISTANCE  =   20.0;
 
+
 struct Features{
         
     KeyPoints keypoints;
