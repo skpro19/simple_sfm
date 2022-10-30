@@ -205,7 +205,10 @@ void convertToHomogeneous(const cv::Mat &mat_3d_, cv::Mat &mat_4d_){
 
 
 
-void simple_sfm::SimpleSFM::visualizeCloudPointProjections(const cv::Matx34f &P1_, const cv::Matx34f &P2_, const std::vector<CloudPoint3d> &pointcloud_){
+void simple_sfm::SimpleSFM::visualizeCloudPointProjections(const cv::Matx34f &P1_, 
+                                                            const cv::Matx34f &P2_, 
+                                                            const std::vector<CloudPoint3d> &pointcloud_,
+                                                            const cv::Mat &img_a_){
 
     std::cout << "##############" << std::endl;
     std::vector<cv::Point3f> v_; 
@@ -223,7 +226,7 @@ void simple_sfm::SimpleSFM::visualizeCloudPointProjections(const cv::Matx34f &P1
     std::cout << "###########" << std::endl;
     //Vis::draw2DPoints(x_);
     
-    cv::Mat gt_mat_ = cv::Mat::zeros(376, 1241, CV_8UC3);
+    //cv::Mat gt_mat_ = cv::Mat::zeros(376, 1241, CV_8UC3);
 
     //for(int i = 0 ; i < 50; i++) std::cout << x_.row(i) << std::endl;
 
@@ -232,11 +235,11 @@ void simple_sfm::SimpleSFM::visualizeCloudPointProjections(const cv::Matx34f &P1
     for(int i = 0 ; i < x_.rows; i++) {
         
         //std::cout << x_.row(i) << std::endl;
-        cv::circle(gt_mat_, {x_.at<float>(i,0), x_.at<float>(i,1)} ,1, cv::viz::Color::celestial_blue(), 1);
+        cv::circle(img_a_, {x_.at<float>(i,0), x_.at<float>(i,1)} ,1, cv::viz::Color::celestial_blue(), 1);
         
     }
 
-    cv::imshow("gt_", gt_mat_);
+    cv::imshow("gt_", img_a_);
     cv::waitKey(0);
 
 

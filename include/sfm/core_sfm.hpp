@@ -36,7 +36,8 @@ namespace simple_sfm{
 
             void visualizeCloudPointProjections(const cv::Matx34f &P1_, 
                                                 const cv::Matx34f &P2_, 
-                                                const std::vector<CloudPoint3d> &cloudpoints_);
+                                                const std::vector<CloudPoint3d> &cloudpoints_,
+                                                const cv::Mat &img_a_ = cv::Mat::zeros(376, 1241, CV_8UC3));
 
 
 

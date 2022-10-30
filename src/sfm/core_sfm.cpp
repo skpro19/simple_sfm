@@ -63,7 +63,7 @@ void simple_sfm::SimpleSFM::initializeSFM(){
 
     std::cout << "mPointcloud.size(): " << mPointCloud_.size() << std::endl;
 
-    visualizeCloudPointProjections(P1_, P2_, mPointCloud_);
+    visualizeCloudPointProjections(P1_, P2_, mPointCloud_, img_a_);
 
 
 }
