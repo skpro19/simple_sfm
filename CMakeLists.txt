@@ -27,6 +27,7 @@ add_executable(simple_sfm
     src/sfm/io.cpp
     src/sfm/frame.cpp
     src/sfm/vis.cpp
+    src/sfm/sfm_util.cpp
 
     # src/sfm/vis.cpp
 )

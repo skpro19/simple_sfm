@@ -16,13 +16,20 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 
 }
 
+void simple_sfm::SimpleSFM::updateIOParams() 
+{
 
+    io_->getImageFileNames(mFrames_);
+    io_->getGTPoses(gt_poses_);
+    
+    K_  = io_->getK(); 
 
+}
 
 
 void simple_sfm::SimpleSFM::initializeSFM(){
 
-    cv::Matx34f P1_, P2_; 
+    cv::Matx34f C1_, C2_; 
     
     assert(mFrames_.size() >= 2);
 
@@ -40,30 +47,20 @@ void simple_sfm::SimpleSFM::initializeSFM(){
     Matches matches_ = Frame::getMatches(f1_, f2_);
 
     Matches pruned_matches_;
-
-    bool flag_ = findCameraMatrices(P1_, P2_,f1_, f2_, matches_, pruned_matches_);
+    
+    bool flag_ = SfmHelper::findCameraMatrices(C1_, C2_,f1_, f2_, matches_, K_, pruned_matches_);
     
     std::cout << "pruned_matches_.size(): " << pruned_matches_.size() << std::endl;
 
     assert(flag_);
 
-    //std::cout << "P1_: " << P1_ << std::endl;
-    //std::cout << "P2_: " << P2_ << std::endl;
-    cv::Mat A_, R_, t_hom_, t_;
-    
-    cv::decomposeProjectionMatrix(P2_, K_, R_, t_hom_);
-    std::cout << "t_hom_: " << t_hom_ << std::endl;
-    
-    cv::convertPointsFromHomogeneous(t_hom_.t(), t_);
+    flag_ = SfmHelper::triangulateViews(img_a_, img_b_, C1_, C2_, K_, mPointCloud_, pruned_matches_);
 
-    std::cout << "t_: " << t_ << std::endl;
-
-    
-    flag_ = triangulateViews(img_a_, img_b_, P1_, P2_, mPointCloud_);
+    assert(flag_);
 
     std::cout << "mPointcloud.size(): " << mPointCloud_.size() << std::endl;
-
-    visualizeCloudPointProjections(P1_, P2_, mPointCloud_, img_a_);
+    
+    SfmHelper::visualizeCloudPointProjections(C1_, C2_, mPointCloud_, K_, img_a_);
 
 
 }

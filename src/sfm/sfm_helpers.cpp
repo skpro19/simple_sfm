@@ -1,31 +1,23 @@
-#include "../../include/sfm/core_sfm.hpp"
-
-//#include <opencv2/core/check.hpp>
+#include "../../include/sfm/sfm_helpers.hpp"
 
 
-void simple_sfm::SimpleSFM::updateIOParams() 
-{
 
-    io_->getImageFileNames(mFrames_);
-    io_->getGTPoses(gt_poses_);
-    
-    P_prev_ = io_->getP0();
-    K_  = io_->getK(); 
 
-    cv::Matx41d t_ = io_->gett0();
-    t_prev_ = cv::Matx31d(t_(0,0), t_(1, 0), t_(2,0));
-    
-    R_prev_ = io_->getR0();
-
-}
 
 //TODO --> check alignFeaturesUsingMatches for bug ; add inlier ratio check ; tune inlier ratio condition
-bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34f &P1_ , cv::Matx34f &P2_, const Features &f1_, const Features &f2_, const Matches &matches_, Matches &pruned_matches_){
+bool simple_sfm::SfmHelper::findCameraMatrices(cv::Matx34f &C1_ , 
+                                                cv::Matx34f &C2_, 
+                                                const Features &f1_, 
+                                                const Features &f2_, 
+                                                const Matches &matches_,
+                                                const cv::Matx33f &K_, 
+                                                Matches &pruned_matches_){
 
 
-    std::cout << "########################################################################" << std::endl;
+    //std::cout << "########################################################################" << std::endl;
+     std::cout << "==================== START OF findCameraMatrices =============================" << std::endl;
 
-
+    
     cv::Mat E_, R, t, inlier_mask_;
 
     
@@ -42,7 +34,7 @@ bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34f &P1_ , cv::Matx34f &P
     
     E_ = cv::findEssentialMat(pts1_, pts2_, K_,cv::RANSAC, 0.999, 1.0, inlier_mask_);
     
-    //std::cout << "E_: " << E_ << std::endl;
+    std::cout << "E_: " << E_ << std::endl;
 
     const int inlier_cnt_ = cv::recoverPose(E_, pts1_, pts2_, K_, R, t, inlier_mask_);
 
@@ -52,16 +44,19 @@ bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34f &P1_ , cv::Matx34f &P
 
     if(inlier_cnt_ < POSE_INLIERS_MINIMAL_COUNT) { return false;}
 
-    P1_ = cv::Matx34d::eye();
+    C1_ = cv::Matx34f::eye();
 
-    P2_ = cv::Matx34d(R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
+    std::cout << "C1_: " << C1_ << std::endl;
+
+    C2_ = cv::Matx34f(R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
                      R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
                      R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2));
 
+
+    std::cout << "C2_: " << C2_ << std::endl;
+
     pruned_matches_.resize(0);
 
-    //const Matches &matches_ = mMFeatureMatches_[img_pair_.first][img_pair_.second];
-        
     for(int i = 0 ; i < inlier_mask_.rows; i++) {
 
         if(inlier_mask_.at<uchar>(i)){
@@ -71,52 +66,48 @@ bool simple_sfm::SimpleSFM::findCameraMatrices(cv::Matx34f &P1_ , cv::Matx34f &P
         }
     }   
 
-   std::cout << "########################################################################" << std::endl;
+    std::cout << "==================== END OF findCameraMatrices =============================" << std::endl << std::endl;
 
     return true;
    
 }
 
-bool simple_sfm::SimpleSFM::triangulateViews(const cv::Mat &img_a_, const cv::Mat &img_b_, const cv::Matx34d &P1_, const cv::Matx34d &P2_, std::vector<CloudPoint3d> &pointcloud_){
+bool simple_sfm::SfmHelper::triangulateViews(const cv::Mat &img_a_, 
+                                            const cv::Mat &img_b_,
+                                            const cv::Matx34d &C1_, 
+                                            const cv::Matx34d &C2_,
+                                            const cv::Matx33f &K_, 
+                                            std::vector<CloudPoint3d> &pointcloud_,
+                                            const Matches &pruned_matches_){
 
-    
-    
+
     const Features &f1_ = Frame::extractFeaturesAndDescriptors(img_a_); 
     const Features &f2_ = Frame::extractFeaturesAndDescriptors(img_b_); 
     
-    const Matches &matches_ = Frame::getMatches(f1_, f2_);
-
     Features f1_mat_, f2_mat_;
     std::vector<int> ref_f1_, ref_f2_;
-    Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_,ref_f1_, ref_f2_,  matches_);
+    Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_,ref_f1_, ref_f2_,  pruned_matches_);
 
-    
     cv::Mat normalized_pts_1_, normalized_pts_2_;
-
+    
     cv::undistortPoints(f1_mat_.points, normalized_pts_1_, K_, cv::Mat());
     cv::undistortPoints(f2_mat_.points, normalized_pts_2_, K_, cv::Mat());
     
-    
     cv::Mat pts_4d_;
-    cv::triangulatePoints(P1_, P2_, normalized_pts_1_, normalized_pts_2_, pts_4d_);
-
+    cv::triangulatePoints(C1_, C2_, normalized_pts_1_, normalized_pts_2_, pts_4d_);
     
     cv::Mat pts_3d_;
     cv::convertPointsFromHomogeneous(pts_4d_.t(), pts_3d_);
     
-    
     cv::Mat rvec1_;
-    cv::Rodrigues(P1_.get_minor<3, 3>(0,0), rvec1_);
-    cv::Mat tvec1_(P1_.get_minor<3,1>(0,3).t());
+    cv::Rodrigues(C1_.get_minor<3, 3>(0,0), rvec1_);
+    cv::Mat tvec1_(C1_.get_minor<3,1>(0,3).t());
     
-
     cv::Mat rvec2_;
-    cv::Rodrigues(P2_.get_minor<3, 3>(0,0), rvec2_);
-    cv::Mat tvec2_(P2_.get_minor<3,1>(0,3).t());
-
+    cv::Rodrigues(C2_.get_minor<3, 3>(0,0), rvec2_);
+    cv::Mat tvec2_(C2_.get_minor<3,1>(0,3).t());
     
     Points2d projected_pts_1_, projected_pts_2_;
-    
     cv::projectPoints(pts_3d_, rvec1_, tvec1_, K_, cv::Mat(), projected_pts_1_);
     cv::projectPoints(pts_3d_, rvec2_, tvec2_, K_, cv::Mat(), projected_pts_2_);
 
@@ -136,111 +127,46 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Mat &img_a_, const cv::Ma
         CloudPoint3d cloud_pt_;
         cloud_pt_.point_ = cv::Point3d{pts_3d_.at<double>(k,0), pts_3d_.at<double>(k,1), pts_3d_.at<double>(k,2)};
 
-        //cloud_pt_.viewMap[i] = ref_f1_[k];
-        //cloud_pt_.viewMap[j] = ref_f2_[k];
-        
         pointcloud_.push_back(cloud_pt_);
         
-
     }
-    
+
+    std::cout << "pointcloud_.size(): " << pointcloud_.size() << std::endl;
+    std::cout << "rejected_pts_.size(): " << rejected_3d_pts_cnt_ << std::endl;
+
+    assert((int)pointcloud_.size() + rejected_3d_pts_cnt_ == pruned_matches_.size());    
+
+    std::cout << "==================== END OF triangulateViews =============================" << std::endl << std::endl;
+
     return true;
     
 }
 
-void printSize(const std::string &name_, const cv::Mat &mat_){
 
-    std::cout << name_ <<  " ---> (" << mat_.rows << ","  << mat_.cols << ")" << std::endl;
-
-}
-
-// x_hom_ ==> (3 * 2516)
-void convertFromHomogeneous(const cv::Mat &x_hom_, cv::Mat &x_){
-
-    int c_ = x_hom_.cols;
-    int r_ = x_hom_.rows;
-    
-    //std::cout << "x_hom_.col(0): " << x_hom_.col(0) << std::endl;
-
-    cv::convertPointsFromHomogeneous(x_hom_.t(), x_);
-
-    //std::cout << "x_.row(0): " << x_.row(0) << std::endl;
-
-    //printSize("x_", x_);
-    
-    float *data = (float*)x_.data;
-
-    x_ = cv::Mat(cv::Size(r_ - 1,  c_), CV_32F, data);
-
-    //printSize("x_" , x_);
-
-    //std::cout << "x_.row(0): " << x_.row(0) << std::endl;
-
-}
-
-// mat_3d_ ==> (3 * 2516)
-void convertToHomogeneous(const cv::Mat &mat_3d_, cv::Mat &mat_4d_){
-
-    ///printSize("mat_3d_" , mat_3d_);
-
-    int cols_ = mat_3d_.cols;
-    int rows_ = mat_3d_.rows;
-
-    //cv::Mat mat_4d_;
-    cv::convertPointsToHomogeneous(mat_3d_.t(), mat_4d_);
-    
-    //std::cout << "mat_4d.size(): " << mat_4d_.rows << " , " << mat_4d_.cols << std::endl;
-
-    //std::cout << "mat_4d_.row(0): " << mat_4d_.row(0) << std::endl;
-    
-    float *data = (float*)mat_4d_.data;
-
-    mat_4d_ = cv::Mat(cv::Size(rows_ + 1,  cols_), CV_32F, data);
-
-    //std::cout << "mat_4d.size(): " << mat_4d_.rows << " , " << mat_4d_.cols << std::endl;
-
-    //std::cout << "mat_4d_.row(0): " << mat_4d_.row(0) << std::endl;
-
-}
-
-
-
-void simple_sfm::SimpleSFM::visualizeCloudPointProjections(const cv::Matx34f &P1_, 
+void simple_sfm::SfmHelper::visualizeCloudPointProjections(const cv::Matx34f &P1_, 
                                                             const cv::Matx34f &P2_, 
                                                             const std::vector<CloudPoint3d> &pointcloud_,
-                                                            const cv::Mat &img_a_){
+                                                            const cv::Matx33f &K_,
+                                                            const cv::Mat &base_img_){
 
-    std::cout << "##############" << std::endl;
+
+                            
+    std::cout << "==================== START OF visualizeCloudPointProjections =============================" << std::endl << std::endl;
+
     std::vector<cv::Point3f> v_; 
     for(const auto &t: pointcloud_) v_.push_back(t.point_);
 
-
     
     cv::Mat mat_4d_, mat_3d_ = cv::Mat(v_).reshape(1).t();
-    convertToHomogeneous(mat_3d_, mat_4d_);
+    SfmUtil::convertToHomogeneous(mat_3d_, mat_4d_);
     
-    cv::Mat x_,  x_hom_ = cv::Mat(P2_) * mat_4d_.t();
-    convertFromHomogeneous(x_hom_ , x_);   // x_ ===> (2516 * 2) , x_hom_ ==> (3 * 2516)
+    cv::Mat x_,  x_hom_ = cv::Mat(K_) * cv::Mat(P2_) * mat_4d_.t();
+    SfmUtil::convertFromHomogeneous(x_hom_ , x_);   // x_ ===> (2516 * 2) , x_hom_ ==> (3 * 2516)
 
-    
-    std::cout << "###########" << std::endl;
-    //Vis::draw2DPoints(x_);
-    
-    //cv::Mat gt_mat_ = cv::Mat::zeros(376, 1241, CV_8UC3);
+   
+    Vis::draw2DPoints(base_img_, x_);
 
-    //for(int i = 0 ; i < 50; i++) std::cout << x_.row(i) << std::endl;
-
-    //std::cout << "%%%%" << std::endl;
-
-    for(int i = 0 ; i < x_.rows; i++) {
-        
-        //std::cout << x_.row(i) << std::endl;
-        cv::circle(img_a_, {x_.at<float>(i,0), x_.at<float>(i,1)} ,1, cv::viz::Color::celestial_blue(), 1);
-        
-    }
-
-    cv::imshow("gt_", img_a_);
-    cv::waitKey(0);
+    std::cout << "==================== END OF visualizeCloudPointProjections =============================" << std::endl << std::endl;
 
 
 }

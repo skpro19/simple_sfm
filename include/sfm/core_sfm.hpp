@@ -7,9 +7,11 @@
 
 //#include "bookkeeping.hpp"
 //#include "vis.hpp"
-#include "frame.hpp"
+//#include "frame.hpp"
 #include "io.hpp"
 #include "vis.hpp"
+#include "sfm_util.hpp"
+#include "sfm_helpers.hpp"
 
     
 namespace simple_sfm{
@@ -26,21 +28,7 @@ namespace simple_sfm{
 
 
             void updateIOParams();            
-            bool findCameraMatrices(cv::Matx34f &P1_ , cv::Matx34f &P2_, const Features &f1_, const Features &f2_, const Matches &matches_, Matches &pruned_matches_);
-            bool triangulateViews(const cv::Mat &img_a_, 
-                                const cv::Mat &img_b_, 
-                                const cv::Matx34d &P1_, 
-                                const cv::Matx34d &P2_, 
-                                std::vector<CloudPoint3d> &pointcloud_);
-
-
-            void visualizeCloudPointProjections(const cv::Matx34f &P1_, 
-                                                const cv::Matx34f &P2_, 
-                                                const std::vector<CloudPoint3d> &cloudpoints_,
-                                                const cv::Mat &img_a_ = cv::Mat::zeros(376, 1241, CV_8UC3));
-
-
-
+           
 
 
 
