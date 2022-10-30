@@ -21,7 +21,6 @@ namespace simple_sfm{
 
             Frame();
 
-            static void extractAndMatchFeatures(const cv::Mat &img_1, const cv::Mat &img_2);    
             static double getScale(const cv::Mat &prev_poses_, const cv::Mat &curr_poses_) ;
             
             static inline std::vector<cv::KeyPoint> kp_1, kp_2;

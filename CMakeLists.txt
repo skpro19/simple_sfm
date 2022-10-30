@@ -22,7 +22,8 @@ add_definitions(
 
 add_executable(simple_sfm
     src/sfm/main.cpp
-    src/sfm/sfm.cpp
+    src/sfm/core_sfm.cpp
+    src/sfm/sfm_helpers.cpp
     src/sfm/io.cpp
     src/sfm/frame.cpp
     src/sfm/vis.cpp

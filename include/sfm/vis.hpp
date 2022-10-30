@@ -7,7 +7,6 @@
 //  ===========================================================================
 
 
-#include "sfm.hpp"
 #include "ds.hpp"
 
 #include <opencv2/viz/types.hpp>
@@ -31,7 +30,8 @@ namespace simple_sfm {
             static void updatePredictedPose(const cv::Mat &pose_);
             static void updateBAPose(const cv::Mat &pose_);
             static void visualizePointCloud(const std::vector<CloudPoint3d> &pointcloud_);
-
+            static void draw2DPoints(const cv::Mat &mat_) ;
+        
         private:
 
             static inline cv::Mat gt_mat_ = cv::Mat::zeros(1000, 1000, CV_8UC3);

@@ -1,3 +1,5 @@
+/*
+
 #ifndef SFM_H
 #define SFM_H
 
@@ -30,7 +32,7 @@ namespace simple_sfm{
             void runSFMPipeline();
             void createFeatureMatchMatrixThreaded();            
 
-            void createFeatureMatrix();
+            void createFeatureMatrix(const int a_, const int b_);
             void createFeatureMatchMatrix();
             void initializeBaselineSFM();
             std::map<float, ImagePair> sortViewsByHomography();
@@ -93,3 +95,5 @@ namespace simple_sfm{
 
 
 #endif
+
+*/

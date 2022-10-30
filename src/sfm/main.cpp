@@ -1,4 +1,4 @@
-#include "../../include/sfm/sfm.hpp"
+#include "../../include/sfm/core_sfm.hpp"
 
 
 int main(){
@@ -8,7 +8,7 @@ int main(){
     
     simple_sfm::SimpleSFM sfm_(base_folder_);   
     
-    sfm_.runSFMPipeline();
-    
+    //sfm_.runSFMPipeline();
+
     
 }

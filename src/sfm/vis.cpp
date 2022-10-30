@@ -17,6 +17,29 @@ void simple_sfm::Vis::displayFrame(const cv::Mat &frame_)
     
 }
 
+void simple_sfm::Vis::draw2DPoints(const cv::Mat &mat_) {
+
+    //int cols_ = mat_.cols; 
+    assert(mat_.cols == 2);
+
+    //for(int i = 0 ; i < 10; i++) std::cout << mat_.row(i) << std::endl;
+
+    for(int i =0; i < mat_.rows; i++){
+
+        float x_ = mat_.at<float>(i, 0), y_ = mat_.at<float>(i ,1);
+
+        cv::Point2f p_(x_, y_);
+        
+        std::cout << mat_.row(i) << " " << p_ << std::endl;
+        
+        cv::circle(Vis::gt_mat_, p_ ,1, cv::viz::Color::celestial_blue(), 1);
+        cv::imshow("gt_", Vis::gt_mat_);
+        cv::waitKey(10);
+
+    }
+
+}
+
 void simple_sfm::Vis::visualizePointCloud(const std::vector<CloudPoint3d> &pointcloud_) {
     
 

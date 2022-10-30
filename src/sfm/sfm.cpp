@@ -1,3 +1,5 @@
+/*
+
 #include "../../include/sfm/sfm.hpp"
 
 #include <opencv2/calib3d.hpp>
@@ -487,8 +489,7 @@ void simple_sfm::SimpleSFM::mergeNewPointCloud(std::vector<CloudPoint3d> &pointc
                         for(const auto &match_ : matches_) {
 
                             if( match_.queryIdx == image_pair_.first && 
-                                match_.trainIdx == image_pair_.second /*&& 
-                                match_.distance < MERGE_CLOUD_FEATURE_MIN_MATCH_DISTANCE*/) {
+                                match_.trainIdx == image_pair_.second ) {
                                 
                                 std::cout << "POINTCLOUD MATCH FOUND!" << std::endl;
                                 matching_view_pt_found_ = true; 
@@ -660,10 +661,7 @@ bool simple_sfm::SimpleSFM::triangulateViews(const cv::Matx34d &P1_, const cv::M
     std::vector<int> ref_f1_, ref_f2_;
     Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_,ref_f1_, ref_f2_,  matches_);
 
-    /*std::cout << "f1_mat_.kp.size(): " << f1_mat_.keypoints.size() << " f2_mat_.kp.size(): " << f2_mat_.keypoints.size() << std::endl;
-    std::cout << "f1_mat_.p.size(): " << f1_mat_.points.size() << " f2_mat_.p.size(): " << f2_mat_.points.size() << std::endl;
-    std::cout << "f1_mat_.des.size(): " << f1_mat_.descriptors.size() << " f2_mat_.des.size(): " << f2_mat_.descriptors.size() << std::endl;
-    */
+    
     cv::Mat normalized_pts_1_, normalized_pts_2_;
 
     cv::undistortPoints(f1_mat_.points, normalized_pts_1_, K_, cv::Mat());
@@ -860,3 +858,5 @@ void simple_sfm::SimpleSFM::updateIOParams()
     R_prev_ = io_->getR0();
 
 }
+
+*/

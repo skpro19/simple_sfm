@@ -1,6 +1,6 @@
-//#include "../../include/sfm/io.hpp"
+#include "../../include/sfm/io.hpp"
 
-#include "../../include/sfm/sfm.hpp"
+//#include "../../include/sfm/sfm.hpp"
 
 
 simple_sfm::SFM_IO::SFM_IO(const std::string &base_folder_)
