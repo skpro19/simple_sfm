@@ -9,7 +9,6 @@
 #include "sfm_util.hpp"
 #include "vis.hpp"
 
-#include "unit_tests.hpp"
 
 namespace simple_sfm{
 
@@ -36,20 +35,28 @@ namespace simple_sfm{
                                         std::vector<CloudPoint3d> &pointcloud_,
                                         const Matches &pruned_matches_);
 
-
-            static void visualizeCloudPointProjections(const cv::Matx34f &P1_, 
-                                                        const cv::Matx34f &P2_, 
-                                                        const std::vector<CloudPoint3d> &cloudpoints_,
-                                                        const cv::Matx33f &K_,
-                                                        const cv::Mat &base_img_ = cv::Mat::zeros(376, 1241, CV_8UC3));
-
-
-            static Match2D3D get2D3DMatches(const int view_idx_, 
+           static Match2D3D get2D3DMatches(const int view_idx_, 
                                             const std::vector<CloudPoint3d> &pointcloud_,
                                             const Features &f1_,
                                             const Features &f2_,
                                             const Matches &pruned_matches_);
-        
+
+            
+
+            static void visualizeCloudPointProjections(const cv::Matx34f &C1_, 
+                                                            const cv::Matx34f &C2_, 
+                                                            const std::vector<CloudPoint3d> &pointcloud_,
+                                                            const cv::Matx33f &K_,
+                                                            const cv::Mat &base_img_);
+
+            static void projectPCLOnFrameIdx(const int frame_idx_, 
+                                                const std::vector<cv::Matx34f> &mCameraPoses_,
+                                                const std::vector<cv::String> mFrames_, 
+                                                const std::vector<CloudPoint3d> &pointcloud_,
+                                                const cv::Matx33f &K_);
+
+
+
         private:
 
 

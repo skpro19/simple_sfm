@@ -11,9 +11,11 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
     io_     =   std::make_shared<SFM_IO>(base_folder_);
    
     updateIOParams();
+    mCameraPoses_.resize(mFrames_.size(), cv::Matx34f());
 
     initializeSFM();
 
+   
 
 }
 
@@ -42,8 +44,8 @@ void simple_sfm::SimpleSFM::initializeSFM(){
     
     std::cout << "img_a.size(): " << img_a_.size() << std::endl;
 
-    cv::imshow("img_a", img_a_);
-    cv::waitKey(0);
+    //cv::imshow("img_a", img_a_);
+    // /cv::waitKey(0);
 
     Features f1_ = Frame::extractFeaturesAndDescriptors(img_a_);
     Features f2_ = Frame::extractFeaturesAndDescriptors(img_b_);
@@ -53,18 +55,24 @@ void simple_sfm::SimpleSFM::initializeSFM(){
     Matches pruned_matches_;
     
     bool flag_ = SfmHelper::findCameraPoseMatrices(C1_, C2_,f1_, f2_, matches_, K_, pruned_matches_);
-    
+
+    mCameraPoses_[0] = C1_; 
+    mCameraPoses_[1] = C2_;
+
     std::cout << "pruned_matches_.size(): " << pruned_matches_.size() << std::endl;
 
     assert(flag_);
 
-    flag_ = SfmHelper::triangulateViews(f1_, f2_, 1, C1_, C2_, K_, globalPointCloud_, pruned_matches_);
+    flag_ = SfmHelper::triangulateViews(f1_, f2_, 1, C1_, C2_, K_, lastPointCloud_, pruned_matches_);
 
     assert(flag_);
 
-    std::cout << "mPointcloud.size(): " << globalPointCloud_.size() << std::endl;
+    std::cout << "mPointcloud.size(): " << lastPointCloud_.size() << std::endl;
     
-    SfmHelper::visualizeCloudPointProjections(C1_, C2_, globalPointCloud_, K_, img_a_);
+//    SfmHelper::projectPCLOnFrameIdx2(1, mFrames_, mCameraPoses_, lastPointCloud_, K_, img_a_);
+    
+    //SfmHelper::visualizeCloudPointProjections(C1_, C2_, lastPointCloud_, K_, img_a_);
+    SfmHelper::projectPCLOnFrameIdx(1, mCameraPoses_, mFrames_, lastPointCloud_, K_);
 
 
 }

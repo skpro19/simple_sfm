@@ -21,12 +21,13 @@ void simple_sfm::Vis::draw2DPoints(cv::Mat base_, const cv::Mat &mat_) {
 
     assert(mat_.cols == 2);
 
-    for(int i =0; i < mat_.rows; i++){
+     for(int i =0; i < mat_.rows; i++){
 
         float x_ = mat_.at<float>(i, 0), y_ = mat_.at<float>(i ,1);
-
-        cv::Point2f p_(x_, y_);
-        cv::circle(base_, p_ ,2, cv::viz::Color::yellow(), 1);
+        //std::cout << "(" << x_ << "," << y_ << ")" << std::endl;
+        cv::Point2d p_(x_, y_);
+        //std::cout << p_ << std::endl;
+        cv::circle(base_, p_ ,2, cv::viz::Color::cherry(), 2);
         
     }
 

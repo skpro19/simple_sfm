@@ -13,6 +13,7 @@
 #include "sfm_util.hpp"
 #include "sfm_helpers.hpp"
 
+#include "sfm_tests.hpp"
     
 namespace simple_sfm{
 
@@ -39,7 +40,7 @@ namespace simple_sfm{
 
             //** non-core vars                   
             std::vector<cv::String>                 mFrames_;
-            std::vector<cv::Matx34d>                mCameraPoses_;
+            std::vector<cv::Matx34f>                mCameraPoses_;
 
             
             std::shared_ptr<SFM_IO>                     io_;
