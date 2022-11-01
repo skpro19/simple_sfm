@@ -10,9 +10,7 @@
 //#include "frame.hpp"
 #include "io.hpp"
 #include "vis.hpp"
-#include "sfm_util.hpp"
 #include "sfm_helpers.hpp"
-
 #include "sfm_tests.hpp"
     
 namespace simple_sfm{

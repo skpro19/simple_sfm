@@ -72,8 +72,8 @@ void simple_sfm::SimpleSFM::initializeSFM(){
 //    SfmHelper::projectPCLOnFrameIdx2(1, mFrames_, mCameraPoses_, lastPointCloud_, K_, img_a_);
     
     //SfmHelper::visualizeCloudPointProjections(C1_, C2_, lastPointCloud_, K_, img_a_);
-    SfmHelper::projectPCLOnFrameIdx(1, mCameraPoses_, mFrames_, lastPointCloud_, K_);
-
+    //SfmTest::projectPCLOnFrameIdx(1, mCameraPoses_, mFrames_, lastPointCloud_, K_);
+    SfmTest::showPCLPointsForFrameIdx(1, lastPointCloud_, mFrames_);
 
 }
 

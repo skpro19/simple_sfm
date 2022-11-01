@@ -49,11 +49,7 @@ namespace simple_sfm{
                                                             const cv::Matx33f &K_,
                                                             const cv::Mat &base_img_);
 
-            static void projectPCLOnFrameIdx(const int frame_idx_, 
-                                                const std::vector<cv::Matx34f> &mCameraPoses_,
-                                                const std::vector<cv::String> mFrames_, 
-                                                const std::vector<CloudPoint3d> &pointcloud_,
-                                                const cv::Matx33f &K_);
+            
 
 
 
