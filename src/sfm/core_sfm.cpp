@@ -15,7 +15,11 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 
     initializeSFM();
 
-   
+    addView(2);
+    addView(3);
+    addView(4);
+    addView(5);
+    addView(6);
 
 }
 
@@ -63,23 +67,28 @@ void simple_sfm::SimpleSFM::initializeSFM(){
 
     assert(flag_);
 
-    flag_ = SfmHelper::triangulateViews(f1_, f2_, 1, C1_, C2_, K_, lastPointCloud_, pruned_matches_);
+    flag_ = SfmHelper::triangulateViews(f1_, f2_, 1, C1_, C2_, K_, lastPCL_, pruned_matches_);
 
     assert(flag_);
 
-    std::cout << "mPointcloud.size(): " << lastPointCloud_.size() << std::endl;
-    
-//    SfmHelper::projectPCLOnFrameIdx2(1, mFrames_, mCameraPoses_, lastPointCloud_, K_, img_a_);
+    globalPCL_ = lastPCL_;
+
+    std::cout << "mPointcloud.size(): " << globalPCL_.size() << std::endl;
     
     //SfmHelper::visualizeCloudPointProjections(C1_, C2_, lastPointCloud_, K_, img_a_);
     //SfmTest::projectPCLOnFrameIdx(1, mCameraPoses_, mFrames_, lastPointCloud_, K_);
-    SfmTest::showPCLPointsForFrameIdx(1, lastPointCloud_, mFrames_);
+    //SfmTest::showPCLPointsForFrameIdx(1, lastPointCloud_, mFrames_);
+
+
 
 }
 
 
 
 void simple_sfm::SimpleSFM::addView(const int frame_idx_){
+
+    SfmUtil::startSeparator("addView");
+    std::cout << "FRAME_IDX ===> " << frame_idx_ << std::endl;
 
     assert(frame_idx_ > 1);
     
@@ -89,7 +98,11 @@ void simple_sfm::SimpleSFM::addView(const int frame_idx_){
     const Features &f1_ = Frame::extractFeaturesAndDescriptors(img_a_);
     const Features &f2_ = Frame::extractFeaturesAndDescriptors(img_b_);
 
+    std::cout << "f1_.size(): " << f1_.points.size() <<  " f2_.size(): " << f2_.points.size() << std::endl;
+
     const Matches &matches_ = Frame::getMatches(f1_, f2_);
+
+    std::cout << "matches_.size(): " << matches_.size() << std::endl;
     
     Matches pruned_matches_;
 
@@ -97,17 +110,41 @@ void simple_sfm::SimpleSFM::addView(const int frame_idx_){
     bool flag_ = SfmHelper::findCameraPoseMatrices(C1_, C2_,f1_, f2_, matches_, K_, pruned_matches_);
     
     std::cout << "pruned_matches_.size(): " << pruned_matches_.size() << std::endl;
+    
+    Match2D3D match2d3d_ =  SfmHelper::get2D3DMatches(frame_idx_, lastPCL_, f1_, f2_, pruned_matches_);
 
+    std::cout << "match2d3d_.size(): " << match2d3d_.pts_2d_.size() << std::endl;
+    
+    
+    flag_ = SfmHelper::updateCameraPoseFrom2D3DMatch(mCameraPoses_[frame_idx_], match2d3d_, K_);
 
+    //SfmTest::showPCLPointsForFrameIdx(frame_idx_, lastPCL_, mFrames_);
+    SfmTest::projectPCLOnFrameIdx(frame_idx_, mCameraPoses_, mFrames_, lastPCL_, K_);
+
+    std::cout << "updateCameraPoseFrom2D3DMatch FLAG ---> " << flag_ << std::endl;
+    
+    std::cout << "mCameraPoses_[frame_idx]: " << mCameraPoses_[frame_idx_] << std::endl;
+
+    assert(flag_);
+    lastPCL_.resize(0);
+
+    //TODO --> replace frame_idx_ - 1 with last_camera_pose_
+    flag_ = SfmHelper::triangulateViews(f1_, f2_, 
+                                        frame_idx_, 
+                                        mCameraPoses_[frame_idx_ - 1], mCameraPoses_[frame_idx_], 
+                                        K_, lastPCL_, pruned_matches_);
+
+    std::cout << "lastPCL_.size() after triangulation ---> " << lastPCL_.size() << std::endl;
+
+    assert(flag_);
+
+    std::cout << "before updating ---> globalPCL.size(): " << globalPCL_.size() << std::endl;
+
+    SfmHelper::updateGlobalPCL(lastPCL_, globalPCL_, f1_, f2_, pruned_matches_);
+    
+    std::cout << "after updating ---> globalPCL.size(): " << globalPCL_.size() << std::endl;
+    
+    SfmUtil::endSeparator("addView");
 
     
-    //SfmHelper::get2D3DMatches(frame_idx_, mPointCloud_, f1_, f2_, pruned_matches_);
-
-
-
-    //Match2D3D match2d3d_ = sf
-
-
-    
-
 }

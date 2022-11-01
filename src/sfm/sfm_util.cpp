@@ -25,6 +25,23 @@ cv::Matx34f simple_sfm::SfmUtil::getProjectionMatrix(const cv::Mat &A_, const cv
 
 }
 
+void simple_sfm::SfmUtil::startSeparator(const std::string &text){
+
+    std::cout << std::endl;
+    std::cout << "################## " << "START OF " << text << " ############" << std::endl;
+    std::cout << std::endl;
+
+}
+
+void simple_sfm::SfmUtil::endSeparator(const std::string &text) {
+
+    std::cout << std::endl;
+    std::cout << "################## " << "END OF " << text << " ############" << std::endl;
+    std::cout << std::endl;
+
+
+}
+
 
 
 

@@ -31,8 +31,8 @@ namespace simple_sfm{
            
 
             //** core vars            
-            std::vector<CloudPoint3d>               globalPointCloud_;
-            std::vector<CloudPoint3d>               lastPointCloud_;
+            std::vector<CloudPoint3d>               globalPCL_;
+            std::vector<CloudPoint3d>               lastPCL_;
 
             
 

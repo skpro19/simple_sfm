@@ -1,8 +1,127 @@
 #include "../../include/sfm/sfm_helpers.hpp"
 
 
+void simple_sfm::SfmHelper::updateGlobalPCL(const std::vector<CloudPoint3d> &lastPCL, 
+                                            std::vector<CloudPoint3d>&globalPCL,
+                                            const Features &f1_,
+                                            const Features &f2_,
+                                            const Matches &pruned_matches_){
+    
+    int merge_cnt_ = 0 ;
+    int new_pts_cnt_  = 0 ;
 
-/*Match2D3D simple_sfm::SfmHelper::get2D3DMatches(const int view_idx_, 
+    std::vector<CloudPoint3d> pointsToAdd_;
+
+    for(const CloudPoint3d &new_pt_ : lastPCL){
+
+       for(auto &existing_pt_: globalPCL){
+
+            const double norm_ = cv::norm(new_pt_.point_ - existing_pt_.point_);
+
+            if(norm_ < MERGE_CLOUD_POINT_MIN_MATCH_DISTANCE) {
+
+                int train_idx_ = new_pt_.feature_idx_;
+                int query_idx_ = existing_pt_.feature_idx_;
+
+                bool match_flag_ = false;
+
+                for(const auto &match_ : pruned_matches_){
+
+                    match_flag_ = (match_.queryIdx == query_idx_ && match_.trainIdx == train_idx_);
+
+                    if(match_flag_) {
+
+                        merge_cnt_++;
+                        break;
+
+                    }
+                }
+
+                if(match_flag_){
+
+                    existing_pt_.view_idx_ = new_pt_.view_idx_;
+                    existing_pt_.feature_idx_ = new_pt_.feature_idx_;
+
+                }
+                else{
+
+                    pointsToAdd_.push_back(new_pt_);
+
+                }           
+            }
+       }
+    }
+
+    for(const auto &t: pointsToAdd_) globalPCL.push_back(t);
+
+    ///assert(merge_cnt_ == pointsToAdd_.size());
+
+    std::cout << "merge_cnt_: " << merge_cnt_ << std::endl;
+    std::cout << "new_pts_added: " << pointsToAdd_.size() << std::endl;
+
+    assert(pointsToAdd_.size() + merge_cnt_ == lastPCL.size()); 
+
+}
+
+bool simple_sfm::SfmHelper::updateCameraPoseFrom2D3DMatch(cv::Matx34f &camera_pose_, const Match2D3D &match2d3d_, const cv::Matx33f &K_){
+    
+    //std::cout << "Inside getBestViewIndexToMerge!" << std::endl;
+    
+    //std::cout << "n_: " << n_ << std::endl;
+
+    int sz_= (int)match2d3d_.pts_2d_.size(); 
+
+    bool success_ = false;
+
+    cv::Mat rvec_, tvec_; 
+    cv::Mat inliers_;
+
+    //std::cout << "match2d3d.size(): " << match2d3d_.pts_2d_.size() << std::endl;
+
+    success_ = cv::solvePnPRansac(match2d3d_.pts_3d_, match2d3d_.pts_2d_, K_, cv::Mat(), rvec_, tvec_,false,100,8.0, 0.99, inliers_);
+
+    //std::cout << "match2d3d_pts_.size(): " << match2d3d_.pts_3d_.size() << std::endl;
+    //std::cout << "pts_2d.size(): " << match2d3d_.pts_2d_.size() << std::endl;
+    //std::cout << "inliers_cnt_: " << cv::countNonZero(inliers_) << std::endl;
+    //std::cout << "success_: " << success_ << std::endl;
+
+    if(!success_) {return success_; }
+
+   // assert(inliers_.rows != match2d3d_.pts_2d_.size());
+
+    //const double inlier_ratio_ = (1.0) * ((double)inliers_.rows/ (double)match2d3d_.pts_2d_.size());
+    
+    //const double inlier_ratio_ = (1.0) * ((double)inliers_.rows/ (double)match2d3d_.pts_2d_.size());
+    const double inlier_ratio_ = (1.0) * ((double)cv::countNonZero(inliers_)/ (double)match2d3d_.pts_2d_.size());
+    
+    std::cout << "inliers_ratio_: " << inlier_ratio_ << std::endl;
+
+    if(inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO) {
+
+        //std::cout << "inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO" << std::endl;;
+        return false;
+
+    }
+
+    //std::cout << "inlier_ratio_test_: "  << (inlier_ratio_ < POSE_INLIERS_MINIMAL_RATIO)  << std::endl;
+
+    cv::Mat R_;
+    cv::Rodrigues(rvec_, R_);
+
+    const cv::Rect &ROT_    =       cv::Rect(0, 0, 3, 3);
+    const cv::Rect &TRA_    =       cv::Rect(3, 0, 1, 3);
+
+    
+    R_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(ROT_));
+    tvec_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(TRA_));
+
+    //Vis::updatePredictedPose(cv::Mat(camera_pose_));
+    
+    return true;
+    
+}
+
+Match2D3D simple_sfm::SfmHelper::get2D3DMatches(const int curr_view_idx_, 
                                                 const std::vector<CloudPoint3d> &pointcloud_, 
                                                 const Features &f1_, 
                                                 const Features &f2_,
@@ -12,66 +131,43 @@
 
     std::cout << "mPointcloud.size(): " << pointcloud_.size() << std::endl;
     
+    Features f1_mat_, f2_mat_; 
+    std::vector<int> ref_f1_, ref_f2_;
+    Frame::alignFeaturesUsingMatches(f1_, f2_, f1_mat_, f2_mat_, ref_f1_, ref_f2_, pruned_matches_);
+    
     Match2D3D match_2d3d_;
 
-    for (const auto &cloud_pt_: pointcloud_){
-
-        const cv::Point3d &pt_3d_ = cloud_pt_.point_;
-        const std::map<int, int> &view_map_ = cloud_pt_.viewMap; 
-
-
-
-    }
-
-
-
-    const int curr_view_idx_ = view_idx_;
+    int match_cnt_ = 0 ;
 
     for(const auto &cloud_pt_: pointcloud_){
 
-        bool matching_feature_found_ = false;
+        int frame_idx_ = cloud_pt_.view_idx_;
 
-        const cv::Point3d &pt_3d_ = cloud_pt_.point_;
-        const std::map<int, int> &view_map_ = cloud_pt_.viewMap; 
+        if(frame_idx_ != curr_view_idx_ - 1) {continue;}
 
-        for(const auto &item_: view_map_){
-            
-            const int &pt_view_idx_ = item_.first; 
-            const int &feature_idx_ = item_.second;
+        int feat_idx_ = cloud_pt_.feature_idx_;
 
-            const int &left_idx_ = (pt_view_idx_ > curr_view_idx_ ? curr_view_idx_: pt_view_idx_);
-            const int &right_idx_ = (pt_view_idx_ > curr_view_idx_ ? pt_view_idx_: curr_view_idx_);
-            
-            assert(left_idx_ < right_idx_);
 
-            const Matches &matches_ = mMFeatureMatches_[left_idx_][right_idx_];
+        for(const auto &match_: pruned_matches_){
 
-            for(const auto &match: matches_){
+            int flag_ = (match_.queryIdx == feat_idx_);
+
+            if(flag_) {
                 
-                matching_feature_found_ = ((curr_view_idx_ > pt_view_idx_)  ? (match.queryIdx == feature_idx_) : (match.trainIdx == feature_idx_));
-
-                if(matching_feature_found_) {
-                    
-                    //int match_idx_ = ((curr_view_idx_ > pt_view_idx_) ? match.trainIdx : match.queryIdx);
-                    int match_idx_ = ((curr_view_idx_ > pt_view_idx_) ? match.trainIdx : match.queryIdx);
-                    match_2d3d_.pts_2d_.push_back(mFeatures_[view_idx_].points[match_idx_]);
-                    match_2d3d_.pts_3d_.push_back(cloud_pt_.point_);
-                    break;
-                
-                }
+                match_cnt_++;
+                match_2d3d_.pts_2d_.push_back(f2_.points[match_.trainIdx]);
+                match_2d3d_.pts_3d_.push_back(cloud_pt_.point_);
+                break;
             }
-
-            if(matching_feature_found_) {break;}
-        
         }
-    
-    
     }
 
-    std::cout << "match_2d3d.size(): " << match_2d3d_.pts_2d_.size() << std::endl;
+    std::cout << "pcl_.size(): " << pointcloud_.size() << std::endl;
+    std::cout << "match_cnt_: " << match_cnt_ << std::endl;
 
-    return match_2d3d_;
-}*/
+    return match_2d3d_;  
+
+}
 
 
 
@@ -199,7 +295,7 @@ bool simple_sfm::SfmHelper::triangulateViews(const Features &f1_,
         CloudPoint3d cloud_pt_;
         cloud_pt_.point_ = cv::Point3d{pts_3d_.at<double>(k,0), pts_3d_.at<double>(k,1), pts_3d_.at<double>(k,2)};
         cloud_pt_.view_idx_ = frame_idx_;
-        cloud_pt_.feature_idx_ = ref_f1_[k];
+        cloud_pt_.feature_idx_ = ref_f2_[k];
         
         
         pointcloud_.push_back(cloud_pt_);

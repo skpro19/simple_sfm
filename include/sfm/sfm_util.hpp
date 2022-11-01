@@ -19,6 +19,10 @@ namespace simple_sfm{
 
             static void convertToHomogeneous(const cv::Mat &mat_3d_, cv::Mat &mat_4d_);
 
+            static void startSeparator(const std::string &text_);
+            static void endSeparator(const std::string &text_);
+            
+
 
         private:
 
