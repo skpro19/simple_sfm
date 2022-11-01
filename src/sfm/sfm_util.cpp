@@ -12,8 +12,6 @@ cv::Matx34f simple_sfm::SfmUtil::getProjectionMatrix(const cv::Mat &A_, const cv
 
     cv::hconcat(R_, t_, P_);
 
-    //P_.push_back(cv::Mat::ones(1, 4,))
-
     SfmUtil::printSize("P_: " , P_);
     SfmUtil::printSize("R_: " , R_);
     SfmUtil::printSize("t_: " , t_);

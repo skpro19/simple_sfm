@@ -7,15 +7,12 @@
 
 #include <opencv2/opencv.hpp>
 
-
-
 using KeyPoints         =       std::vector<cv::KeyPoint>;
 using Points2d          =       std::vector<cv::Point2d>;
 using Points2f          =       std::vector<cv::Point2f>;
 using Points3d          =       std::vector<cv::Point3d>;
 using Matches           =       std::vector<cv::DMatch>;
 using ImagePair         =       std::pair<int, int>;
-
 
 
 
@@ -37,12 +34,21 @@ struct Features{
 
 };
 
-struct CloudPoint3d{
+/*struct CloudPoint3d{
     
     cv::Point3d point_;
     std::map<int, int> viewMap; //<view_idx, pt_idx_>
 
+};*/
+
+struct CloudPoint3d{
+    
+    cv::Point3d point_;
+    int view_idx_; 
+    int feature_idx_;
+
 };
+
 
 struct Match2D3D{
 

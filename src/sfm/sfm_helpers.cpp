@@ -2,10 +2,81 @@
 
 
 
+/*Match2D3D simple_sfm::SfmHelper::get2D3DMatches(const int view_idx_, 
+                                                const std::vector<CloudPoint3d> &pointcloud_, 
+                                                const Features &f1_, 
+                                                const Features &f2_,
+                                                const Matches &pruned_matches_){
+
+    std::cout << "Inside get2D3d matches! " << std::endl;
+
+    std::cout << "mPointcloud.size(): " << pointcloud_.size() << std::endl;
+    
+    Match2D3D match_2d3d_;
+
+    for (const auto &cloud_pt_: pointcloud_){
+
+        const cv::Point3d &pt_3d_ = cloud_pt_.point_;
+        const std::map<int, int> &view_map_ = cloud_pt_.viewMap; 
+
+
+
+    }
+
+
+
+    const int curr_view_idx_ = view_idx_;
+
+    for(const auto &cloud_pt_: pointcloud_){
+
+        bool matching_feature_found_ = false;
+
+        const cv::Point3d &pt_3d_ = cloud_pt_.point_;
+        const std::map<int, int> &view_map_ = cloud_pt_.viewMap; 
+
+        for(const auto &item_: view_map_){
+            
+            const int &pt_view_idx_ = item_.first; 
+            const int &feature_idx_ = item_.second;
+
+            const int &left_idx_ = (pt_view_idx_ > curr_view_idx_ ? curr_view_idx_: pt_view_idx_);
+            const int &right_idx_ = (pt_view_idx_ > curr_view_idx_ ? pt_view_idx_: curr_view_idx_);
+            
+            assert(left_idx_ < right_idx_);
+
+            const Matches &matches_ = mMFeatureMatches_[left_idx_][right_idx_];
+
+            for(const auto &match: matches_){
+                
+                matching_feature_found_ = ((curr_view_idx_ > pt_view_idx_)  ? (match.queryIdx == feature_idx_) : (match.trainIdx == feature_idx_));
+
+                if(matching_feature_found_) {
+                    
+                    //int match_idx_ = ((curr_view_idx_ > pt_view_idx_) ? match.trainIdx : match.queryIdx);
+                    int match_idx_ = ((curr_view_idx_ > pt_view_idx_) ? match.trainIdx : match.queryIdx);
+                    match_2d3d_.pts_2d_.push_back(mFeatures_[view_idx_].points[match_idx_]);
+                    match_2d3d_.pts_3d_.push_back(cloud_pt_.point_);
+                    break;
+                
+                }
+            }
+
+            if(matching_feature_found_) {break;}
+        
+        }
+    
+    
+    }
+
+    std::cout << "match_2d3d.size(): " << match_2d3d_.pts_2d_.size() << std::endl;
+
+    return match_2d3d_;
+}*/
+
 
 
 //TODO --> check alignFeaturesUsingMatches for bug ; add inlier ratio check ; tune inlier ratio condition
-bool simple_sfm::SfmHelper::findCameraMatrices(cv::Matx34f &C1_ , 
+bool simple_sfm::SfmHelper::findCameraPoseMatrices(cv::Matx34f &C1_ , 
                                                 cv::Matx34f &C2_, 
                                                 const Features &f1_, 
                                                 const Features &f2_, 
@@ -72,8 +143,9 @@ bool simple_sfm::SfmHelper::findCameraMatrices(cv::Matx34f &C1_ ,
    
 }
 
-bool simple_sfm::SfmHelper::triangulateViews(const cv::Mat &img_a_, 
-                                            const cv::Mat &img_b_,
+bool simple_sfm::SfmHelper::triangulateViews(const Features &f1_, 
+                                            const  Features &f2_,
+                                            const int &frame_idx_,
                                             const cv::Matx34d &C1_, 
                                             const cv::Matx34d &C2_,
                                             const cv::Matx33f &K_, 
@@ -81,8 +153,8 @@ bool simple_sfm::SfmHelper::triangulateViews(const cv::Mat &img_a_,
                                             const Matches &pruned_matches_){
 
 
-    const Features &f1_ = Frame::extractFeaturesAndDescriptors(img_a_); 
-    const Features &f2_ = Frame::extractFeaturesAndDescriptors(img_b_); 
+    //const Features &f1_ = Frame::extractFeaturesAndDescriptors(img_a_); 
+    //const Features &f2_ = Frame::extractFeaturesAndDescriptors(img_b_); 
     
     Features f1_mat_, f2_mat_;
     std::vector<int> ref_f1_, ref_f2_;
@@ -126,7 +198,10 @@ bool simple_sfm::SfmHelper::triangulateViews(const cv::Mat &img_a_,
 
         CloudPoint3d cloud_pt_;
         cloud_pt_.point_ = cv::Point3d{pts_3d_.at<double>(k,0), pts_3d_.at<double>(k,1), pts_3d_.at<double>(k,2)};
-
+        cloud_pt_.view_idx_ = frame_idx_;
+        cloud_pt_.feature_idx_ = ref_f1_[k];
+        
+        
         pointcloud_.push_back(cloud_pt_);
         
     }
@@ -143,8 +218,8 @@ bool simple_sfm::SfmHelper::triangulateViews(const cv::Mat &img_a_,
 }
 
 
-void simple_sfm::SfmHelper::visualizeCloudPointProjections(const cv::Matx34f &P1_, 
-                                                            const cv::Matx34f &P2_, 
+void simple_sfm::SfmHelper::visualizeCloudPointProjections(const cv::Matx34f &C1_, 
+                                                            const cv::Matx34f &C2_, 
                                                             const std::vector<CloudPoint3d> &pointcloud_,
                                                             const cv::Matx33f &K_,
                                                             const cv::Mat &base_img_){
@@ -160,7 +235,7 @@ void simple_sfm::SfmHelper::visualizeCloudPointProjections(const cv::Matx34f &P1
     cv::Mat mat_4d_, mat_3d_ = cv::Mat(v_).reshape(1).t();
     SfmUtil::convertToHomogeneous(mat_3d_, mat_4d_);
     
-    cv::Mat x_,  x_hom_ = cv::Mat(K_) * cv::Mat(P2_) * mat_4d_.t();
+    cv::Mat x_,  x_hom_ = cv::Mat(K_) * cv::Mat(C2_) * mat_4d_.t();
     SfmUtil::convertFromHomogeneous(x_hom_ , x_);   // x_ ===> (2516 * 2) , x_hom_ ==> (3 * 2516)
 
    

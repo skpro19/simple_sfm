@@ -27,35 +27,24 @@ namespace simple_sfm{
         private:
 
 
-            void updateIOParams();            
+            void updateIOParams();   
+            void addView(const int frame_idx_);         
            
 
+            //** core vars            
+            std::vector<CloudPoint3d>               globalPointCloud_;
+            std::vector<CloudPoint3d>               lastPointCloud_;
 
+            
 
-
-            std::vector<Features>                   mFeatures_;
-            std::vector<std::vector<Matches> >      mMFeatureMatches_;
+            //** non-core vars                   
             std::vector<cv::String>                 mFrames_;
             std::vector<cv::Matx34d>                mCameraPoses_;
 
-            std::vector<CloudPoint3d>               mPointCloud_;
-            std::set<int>                           mGoodViews_;
-            std::set<int>                           mDoneViews_;
-
-
             
             std::shared_ptr<SFM_IO>                     io_;
-            
-            
             cv::Matx33f                                 K_;
-            cv::Matx34d                                 P_prev_;
-            cv::Matx33d                                 R_prev_;
-            cv::Matx31d                                 t_prev_;
-            cv::Matx34d                                 C_prev_;
-
-
             std::vector<cv::Matx34d>                    gt_poses_;
-            std::vector<cv::Point3f>                    pt_cld__3d_;
         
             
     };

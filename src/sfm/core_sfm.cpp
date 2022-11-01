@@ -14,7 +14,11 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 
     initializeSFM();
 
+
 }
+
+
+
 
 void simple_sfm::SimpleSFM::updateIOParams() 
 {
@@ -48,19 +52,54 @@ void simple_sfm::SimpleSFM::initializeSFM(){
 
     Matches pruned_matches_;
     
-    bool flag_ = SfmHelper::findCameraMatrices(C1_, C2_,f1_, f2_, matches_, K_, pruned_matches_);
+    bool flag_ = SfmHelper::findCameraPoseMatrices(C1_, C2_,f1_, f2_, matches_, K_, pruned_matches_);
     
     std::cout << "pruned_matches_.size(): " << pruned_matches_.size() << std::endl;
 
     assert(flag_);
 
-    flag_ = SfmHelper::triangulateViews(img_a_, img_b_, C1_, C2_, K_, mPointCloud_, pruned_matches_);
+    flag_ = SfmHelper::triangulateViews(f1_, f2_, 1, C1_, C2_, K_, globalPointCloud_, pruned_matches_);
 
     assert(flag_);
 
-    std::cout << "mPointcloud.size(): " << mPointCloud_.size() << std::endl;
+    std::cout << "mPointcloud.size(): " << globalPointCloud_.size() << std::endl;
     
-    SfmHelper::visualizeCloudPointProjections(C1_, C2_, mPointCloud_, K_, img_a_);
+    SfmHelper::visualizeCloudPointProjections(C1_, C2_, globalPointCloud_, K_, img_a_);
 
+
+}
+
+
+
+void simple_sfm::SimpleSFM::addView(const int frame_idx_){
+
+    assert(frame_idx_ > 1);
+    
+    const cv::Mat &img_a_ = cv::imread(mFrames_[frame_idx_ - 1].c_str());
+    const cv::Mat &img_b_ = cv::imread(mFrames_[frame_idx_].c_str());
+    
+    const Features &f1_ = Frame::extractFeaturesAndDescriptors(img_a_);
+    const Features &f2_ = Frame::extractFeaturesAndDescriptors(img_b_);
+
+    const Matches &matches_ = Frame::getMatches(f1_, f2_);
+    
+    Matches pruned_matches_;
+
+    cv::Matx34f C1_, C2_; 
+    bool flag_ = SfmHelper::findCameraPoseMatrices(C1_, C2_,f1_, f2_, matches_, K_, pruned_matches_);
+    
+    std::cout << "pruned_matches_.size(): " << pruned_matches_.size() << std::endl;
+
+
+
+    
+    //SfmHelper::get2D3DMatches(frame_idx_, mPointCloud_, f1_, f2_, pruned_matches_);
+
+
+
+    //Match2D3D match2d3d_ = sf
+
+
+    
 
 }
