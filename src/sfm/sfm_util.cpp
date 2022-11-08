@@ -52,13 +52,17 @@ void simple_sfm::SfmUtil::printSize(const std::string &name_, const cv::Mat &mat
 }
 
 // x_hom_ ==> (3 * 2516)
-void simple_sfm::SfmUtil::convertFromHomogeneous(const cv::Mat &x_hom_, cv::Mat &x_){
+cv::Mat simple_sfm::SfmUtil::convertFromHomogeneous(const cv::Mat &x_hom_){
+
+    
+    for(int i = 0 ;i < 5; i++) std::cout << x_hom_.col(i) << std::endl;
+
 
     int c_ = x_hom_.cols;
     int r_ = x_hom_.rows;
     
     //std::cout << "x_hom_.col(0): " << x_hom_.col(0) << std::endl;
-
+    cv::Mat x_;
     cv::convertPointsFromHomogeneous(x_hom_.t(), x_);
 
     //std::cout << "x_.row(0): " << x_.row(0) << std::endl;
@@ -67,11 +71,22 @@ void simple_sfm::SfmUtil::convertFromHomogeneous(const cv::Mat &x_hom_, cv::Mat 
     
     float *data = (float*)x_.data;
 
+    /*std::cout << "data ===> "; 
+    for(int i = 0 ;i  <25; i++) std::cout << data[i] << " ";
+    std::cout << std::endl;
+    */
+
+
     x_ = cv::Mat(cv::Size(r_ - 1,  c_), CV_32F, data);
 
+    //for(int i = 0 ;i < 5; i++) std::cout << x_.row(i) << std::endl;
+
+    return x_;
     //printSize("x_" , x_);
 
     //std::cout << "x_.row(0): " << x_.row(0) << std::endl;
+
+    SfmUtil::endSeparator("convertFromHOMO");
 
 }
 
@@ -79,6 +94,10 @@ void simple_sfm::SfmUtil::convertFromHomogeneous(const cv::Mat &x_hom_, cv::Mat 
 void simple_sfm::SfmUtil::convertToHomogeneous(const cv::Mat &mat_3d_, cv::Mat &mat_4d_){
 
     ///printSize("mat_3d_" , mat_3d_);
+
+    SfmUtil::startSeparator("SfmUtil::convertToHomo");
+
+    for(int i = 0 ;i < 5; i++) std::cout << mat_3d_.col(i) << std::endl;
 
     int cols_ = mat_3d_.cols;
     int rows_ = mat_3d_.rows;
@@ -92,12 +111,22 @@ void simple_sfm::SfmUtil::convertToHomogeneous(const cv::Mat &mat_3d_, cv::Mat &
     
     float *data = (float*)mat_4d_.data;
 
+    /*std::cout << "data ===> "; 
+    for(int i = 0 ;i  <25; i++) std::cout << data[i] << " ";
+    std::cout << std::endl;
+    */
+
     mat_4d_ = cv::Mat(cv::Size(rows_ + 1,  cols_), CV_32F, data);
+
+    //for(int i = 0 ;i < 5; i++) std::cout << mat_4d_.row(i) << std::endl;
+
 
     //std::cout << "mat_4d.size(): " << mat_4d_.rows << " , " << mat_4d_.cols << std::endl;
 
     //std::cout << "mat_4d_.row(0): " << mat_4d_.row(0) << std::endl;
 
+    SfmUtil::endSeparator("SfmUtil::convertToHomo");
+    
 }
 
 

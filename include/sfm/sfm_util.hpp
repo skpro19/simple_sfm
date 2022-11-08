@@ -15,7 +15,7 @@ namespace simple_sfm{
 
             static void printSize(const std::string &name_, const cv::Mat &mat_);   
 
-            static void convertFromHomogeneous(const cv::Mat &x_hom_, cv::Mat &x_);
+            static cv::Mat convertFromHomogeneous(const cv::Mat &x_hom_);
 
             static void convertToHomogeneous(const cv::Mat &mat_3d_, cv::Mat &mat_4d_);
 

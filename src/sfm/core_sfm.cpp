@@ -1,4 +1,5 @@
 #include "../../include/sfm/core_sfm.hpp"
+#include "../../include/sfm/sfm_util.hpp"
 
 #include <opencv2/calib3d.hpp>
 #include <opencv2/viz/types.hpp>
@@ -15,11 +16,11 @@ simple_sfm::SimpleSFM::SimpleSFM(const std::string &base_folder_)
 
     initializeSFM();
 
-    addView(2);
-    addView(3);
-    addView(4);
-    addView(5);
-    addView(6);
+   //addView(2);
+    //addView(3);
+    //addView(4);
+    //addView(5);
+    //addView(6);
 
 }
 
@@ -37,7 +38,9 @@ void simple_sfm::SimpleSFM::updateIOParams()
 }
 
 
+
 void simple_sfm::SimpleSFM::initializeSFM(){
+
 
     cv::Matx34f C1_, C2_; 
     
@@ -76,16 +79,15 @@ void simple_sfm::SimpleSFM::initializeSFM(){
     std::cout << "mPointcloud.size(): " << globalPCL_.size() << std::endl;
     
     //SfmHelper::visualizeCloudPointProjections(C1_, C2_, lastPointCloud_, K_, img_a_);
-    //SfmTest::projectPCLOnFrameIdx(1, mCameraPoses_, mFrames_, lastPointCloud_, K_);
+    SfmTest::projectPCLOnFrameIdx(1, mCameraPoses_, mFrames_, lastPCL_, K_);
     //SfmTest::showPCLPointsForFrameIdx(1, lastPointCloud_, mFrames_);
-
-
 
 }
 
 
 
-void simple_sfm::SimpleSFM::addView(const int frame_idx_){
+
+/*void simple_sfm::SimpleSFM::addView(const int frame_idx_){
 
     SfmUtil::startSeparator("addView");
     std::cout << "FRAME_IDX ===> " << frame_idx_ << std::endl;
@@ -113,17 +115,21 @@ void simple_sfm::SimpleSFM::addView(const int frame_idx_){
     
     Match2D3D match2d3d_ =  SfmHelper::get2D3DMatches(frame_idx_, lastPCL_, f1_, f2_, pruned_matches_);
 
-    std::cout << "match2d3d_.size(): " << match2d3d_.pts_2d_.size() << std::endl;
+    //std::cout << "match2d3d_.size(): " << match2d3d_.pts_2d_.size() << std::endl;
     
-    
-    flag_ = SfmHelper::updateCameraPoseFrom2D3DMatch(mCameraPoses_[frame_idx_], match2d3d_, K_);
+    cv::Mat camera_pose_;
+    flag_ = SfmHelper::updateCameraPoseFrom2D3DMatch(camera_pose_, match2d3d_, K_);
+ 
+    //std::cout << "camera_pose_: " << camera_pose_ << std::endl;
+
+    mCameraPoses_[frame_idx_] = cv::Matx34f(camera_pose_);
 
     //SfmTest::showPCLPointsForFrameIdx(frame_idx_, lastPCL_, mFrames_);
     SfmTest::projectPCLOnFrameIdx(frame_idx_, mCameraPoses_, mFrames_, lastPCL_, K_);
 
-    std::cout << "updateCameraPoseFrom2D3DMatch FLAG ---> " << flag_ << std::endl;
+    //std::cout << "updateCameraPoseFrom2D3DMatch FLAG ---> " << flag_ << std::endl;
     
-    std::cout << "mCameraPoses_[frame_idx]: " << mCameraPoses_[frame_idx_] << std::endl;
+    //std::cout << "mCameraPoses_[frame_idx]: " << mCameraPoses_[frame_idx_] << std::endl;
 
     assert(flag_);
     lastPCL_.resize(0);
@@ -147,4 +153,4 @@ void simple_sfm::SimpleSFM::addView(const int frame_idx_){
     SfmUtil::endSeparator("addView");
 
     
-}
+}*/

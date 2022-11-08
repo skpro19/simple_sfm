@@ -50,7 +50,7 @@ namespace simple_sfm{
                                                             const cv::Mat &base_img_);
 
 
-            static bool updateCameraPoseFrom2D3DMatch(cv::Matx34f &camera_pose_, 
+            static bool updateCameraPoseFrom2D3DMatch(cv::Mat &camera_pose_, 
                                                 const Match2D3D &match2d3d_, 
                                                 const cv::Matx33f &K_);
 

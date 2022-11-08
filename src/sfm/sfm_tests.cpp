@@ -38,47 +38,65 @@ void simple_sfm::SfmTest::showPCLPointsForFrameIdx(const int &frame_idx_, const 
 
 void simple_sfm::SfmTest::projectPCLOnFrameIdx(const int frame_idx_, 
                                                 const std::vector<cv::Matx34f> &mCameraPoses_,
-                                                const std::vector<cv::String> mFrames_, 
+                                                const std::vector<cv::String> &mFrames_, 
                                                 const std::vector<CloudPoint3d> &pointcloud_,
                                                 const cv::Matx33f &K_){
 
     //cv::String s_ = "/home/skpro19/simple_sfm/data/00/image_0/000005.png";
-    cv::Mat base_img_ = cv::imread(mFrames_[frame_idx_]);
                             
     std::cout << "==================== START OF projectPCLOnFrameIdx =============================" << std::endl << std::endl;
 
     std::vector<cv::Point3f> v_; 
     for(const auto &t: pointcloud_) v_.push_back(t.point_);
 
-    
-    cv::Mat mat_4d_, mat_3d_ = cv::Mat(v_).reshape(1).t();
-    SfmUtil::convertToHomogeneous(mat_3d_, mat_4d_);
-    
-    cv::Matx34f C2_ = mCameraPoses_[frame_idx_];
+    std::cout << "Printing PCL ===> " << std::endl;
+    for(int i = 0; i < 10; i++) std::cout << pointcloud_[i].point_ <<" " << v_[i] <<  std::endl;
 
-    cv::Mat x_,  x_hom_ = cv::Mat(K_) * cv::Mat(C2_) * mat_4d_.t();
-    SfmUtil::convertFromHomogeneous(x_hom_ , x_);   // x_ ===> (2516 * 2) , x_hom_ ==> (3 * 2516)
-    /*const cv::Mat x_copy_ = x_;
-
-    std::cout << "$$$$$$$$$$$$$$  BEFORE PASSING $$$$$$$$$$$$$$" << std::endl;
-        */
-    for(int i = 0 ;i  < 10; i++) std::cout << x_.row(i) << std::endl;
-
-    /*
-    //cv::Mat a_ = cv::imread(mFrames_[0].c_str());
+    std::cout << "============================" << std::endl;
     
-    //Vis::draw2DPoints(cv::imread(mFrames_[frame_idx_].c_str()), x_);
+    cv::Mat mat_4d_;
+    const cv::Mat mat_3d_ = cv::Mat(v_, true).reshape(1).t();
     
-    std::cout << "$$$$$$$$$$$$$$  AFTER PASSING $$$$$$$$$$$$$$" << std::endl;
-    for(int i = 0 ;i  < 10; i++) std::cout << x_copy_.row(i) << std::endl;
-    //for(int i = 0 ;i  < 10; i++) std::cout << x_.at<float>(i,0) <<"," << x_.at<float>(i,1) << std::endl;
-    */
+    SfmUtil::convertToHomogeneous(mat_3d_.clone(), mat_4d_);
+    
+    const cv::Matx34f C2_ = mCameraPoses_[frame_idx_];
 
-   // cv::imshow("base_img_", base_img_);
-    std::cout << "HEELO!" << std::endl;
+    std::cout << "K_ ====> " << K_ << std::endl;
+    std::cout << "C2_ ======> " << C2_ << std::endl;
+
+    const cv::Mat  x_hom_ = cv::Mat(K_) * cv::Mat(C2_) * mat_4d_.t();
+    
+    const cv::Mat x_ = SfmUtil::convertFromHomogeneous(x_hom_ );   // x_ ===> (2516 * 2) , x_hom_ ==> (3 * 2516)
+
+    //const cv::Mat x_clone_ = x_.clone();
+
+    
+    //std::cout << "$$$$$$$$$$$$$$  BEFORE PASSING $$$$$$$$$$$$$$" << std::endl;
+
+    //std::cout << "H1" << std::endl;
+    //std::cout << "x_.size(): " << x_.size() << std::endl;
+    
+    
+    //for(int i = 0 ;i  < 10; i++) std::cout << x_.row(i) << std::endl;
+    
+    std::string file_name_ = mFrames_[frame_idx_];
+    
+    //std::cout << "file_name_: " << file_name_ << std::endl;
+
+    cv::Mat base_img_ = cv::imread(file_name_, cv::IMREAD_COLOR);
     Vis::draw2DPoints(base_img_, x_);
+    
+    /*std::cout << "$$$$$$$$$$$$$$  AFTER PASSING $$$$$$$$$$$$$$" << std::endl;
+    std::cout << "====== x_ ======" << std::endl;
+    for(int i = 0 ;i  < 10; i++) std::cout << x_.row(i) << std::endl;
+    std::cout << std::endl;
 
+    std::cout << "============ x_.copy ======== " << std::endl;
+    for(int i = 0 ;i  < 10; i++) std::cout << x_clone_.row(i) << std::endl;
+    
     std::cout << "==================== END OF projectPCLOnFrameIdx =============================" << std::endl << std::endl;
+    */
+    SfmUtil::endSeparator("projectPCLOnFrameIdx");
 
-
+    
 }

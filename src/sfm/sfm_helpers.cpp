@@ -63,7 +63,7 @@ void simple_sfm::SfmHelper::updateGlobalPCL(const std::vector<CloudPoint3d> &las
 
 }
 
-bool simple_sfm::SfmHelper::updateCameraPoseFrom2D3DMatch(cv::Matx34f &camera_pose_, const Match2D3D &match2d3d_, const cv::Matx33f &K_){
+bool simple_sfm::SfmHelper::updateCameraPoseFrom2D3DMatch(cv::Mat &camera_pose_, const Match2D3D &match2d3d_, const cv::Matx33f &K_){
     
     //std::cout << "Inside getBestViewIndexToMerge!" << std::endl;
     
@@ -108,12 +108,31 @@ bool simple_sfm::SfmHelper::updateCameraPoseFrom2D3DMatch(cv::Matx34f &camera_po
     cv::Mat R_;
     cv::Rodrigues(rvec_, R_);
 
+    std::cout << "rvec_: " << rvec_ << std::endl;
+    std::cout << "R_: " << R_ << std::endl;
+    std::cout << "tvec_: " << tvec_ << std::endl;
+    
+
     const cv::Rect &ROT_    =       cv::Rect(0, 0, 3, 3);
     const cv::Rect &TRA_    =       cv::Rect(3, 0, 1, 3);
 
+    std::cout << "camera_pose_: " << camera_pose_ << std::endl;
+
+    //R_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(ROT_));
+    camera_pose_ = cv::Mat::zeros(3, 4, CV_64FC1);
+
+    R_.copyTo(camera_pose_(ROT_));
+    tvec_.copyTo(camera_pose_(TRA_));
+
+    //camera_pose_(ROT_) = R_.clone();
+    //camera_pose_(TRA_) = tvec_.t();
+        
+    //std::cout << "camera_pose_: " << camera_pose_ << std::endl;
+
     
-    R_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(ROT_));
-    tvec_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(TRA_));
+    //tvec_.copyTo(cv::Mat(3, 4, CV_64FC1, camera_pose_.val)(TRA_));
+
+    std::cout << "camera_pose_: " << camera_pose_ << std::endl;
 
     //Vis::updatePredictedPose(cv::Mat(camera_pose_));
     
@@ -182,7 +201,7 @@ bool simple_sfm::SfmHelper::findCameraPoseMatrices(cv::Matx34f &C1_ ,
 
 
     //std::cout << "########################################################################" << std::endl;
-     std::cout << "==================== START OF findCameraMatrices =============================" << std::endl;
+     //std::cout << "==================== START OF findCameraMatrices =============================" << std::endl;
 
     
     cv::Mat E_, R, t, inlier_mask_;
@@ -197,30 +216,30 @@ bool simple_sfm::SfmHelper::findCameraPoseMatrices(cv::Matx34f &C1_ ,
     const Points2d &pts2_ = f2_mat_.points;
 
 
-    std::cout << "pts1_.size(): " << pts1_.size() << " pts2_.size(): " << pts2_.size() << std::endl;
+   // std::cout << "pts1_.size(): " << pts1_.size() << " pts2_.size(): " << pts2_.size() << std::endl;
     
     E_ = cv::findEssentialMat(pts1_, pts2_, K_,cv::RANSAC, 0.999, 1.0, inlier_mask_);
     
-    std::cout << "E_: " << E_ << std::endl;
+    //std::cout << "E_: " << E_ << std::endl;
 
     const int inlier_cnt_ = cv::recoverPose(E_, pts1_, pts2_, K_, R, t, inlier_mask_);
 
-    std::cout << "R_: " << R << " t: " << t << std::endl;
+    //std::cout << "R_: " << R << " t: " << t << std::endl;
 
-    std::cout << "inlier_cnt_: " << inlier_cnt_ << std::endl;
+    //std::cout << "inlier_cnt_: " << inlier_cnt_ << std::endl;
 
     if(inlier_cnt_ < POSE_INLIERS_MINIMAL_COUNT) { return false;}
 
     C1_ = cv::Matx34f::eye();
 
-    std::cout << "C1_: " << C1_ << std::endl;
+    //std::cout << "C1_: " << C1_ << std::endl;
 
     C2_ = cv::Matx34f(R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0),
                      R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1),
                      R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2));
 
 
-    std::cout << "C2_: " << C2_ << std::endl;
+   // std::cout << "C2_: " << C2_ << std::endl;
 
     pruned_matches_.resize(0);
 
@@ -233,7 +252,7 @@ bool simple_sfm::SfmHelper::findCameraPoseMatrices(cv::Matx34f &C1_ ,
         }
     }   
 
-    std::cout << "==================== END OF findCameraMatrices =============================" << std::endl << std::endl;
+  //  std::cout << "==================== END OF findCameraMatrices =============================" << std::endl << std::endl;
 
     return true;
    
@@ -302,43 +321,13 @@ bool simple_sfm::SfmHelper::triangulateViews(const Features &f1_,
         
     }
 
-    std::cout << "pointcloud_.size(): " << pointcloud_.size() << std::endl;
-    std::cout << "rejected_pts_.size(): " << rejected_3d_pts_cnt_ << std::endl;
+    //std::cout << "pointcloud_.size(): " << pointcloud_.size() << std::endl;
+    //std::cout << "rejected_pts_.size(): " << rejected_3d_pts_cnt_ << std::endl;
 
     assert((int)pointcloud_.size() + rejected_3d_pts_cnt_ == pruned_matches_.size());    
 
-    std::cout << "==================== END OF triangulateViews =============================" << std::endl << std::endl;
+    //std::cout << "==================== END OF triangulateViews =============================" << std::endl << std::endl;
 
     return true;
     
 }
-
-void simple_sfm::SfmHelper::visualizeCloudPointProjections(const cv::Matx34f &C1_, 
-                                                            const cv::Matx34f &C2_, 
-                                                            const std::vector<CloudPoint3d> &pointcloud_,
-                                                            const cv::Matx33f &K_,
-                                                            const cv::Mat &base_img_){
-
-
-                            
-    std::cout << "==================== START OF visualizeCloudPointProjections =============================" << std::endl << std::endl;
-
-    std::vector<cv::Point3f> v_; 
-    for(const auto &t: pointcloud_) v_.push_back(t.point_);
-
-    
-    cv::Mat mat_4d_, mat_3d_ = cv::Mat(v_).reshape(1).t();
-    SfmUtil::convertToHomogeneous(mat_3d_, mat_4d_);
-    
-    cv::Mat x_,  x_hom_ = cv::Mat(K_) * cv::Mat(C2_) * mat_4d_.t();
-    SfmUtil::convertFromHomogeneous(x_hom_ , x_);   // x_ ===> (2516 * 2) , x_hom_ ==> (3 * 2516)
-
-    for(int i = 0 ;i  < 10; i++) std::cout << x_.row(i)  << std::endl;
-   
-    Vis::draw2DPoints(base_img_, x_);
-
-    std::cout << "==================== END OF visualizeCloudPointProjections =============================" << std::endl << std::endl;
-
-
-}
-
